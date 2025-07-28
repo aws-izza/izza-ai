@@ -49,6 +49,10 @@ class DatabaseConnection:
         connection = None
         
         try:
+            print(f"🔄 Starting SSH tunnel to {config['BASTION_HOST']}:{config['BASTION_PORT']}")
+            print(f"🔑 Using SSH key: {config['SSH_KEY_PATH']}")
+            print(f"🎯 Target DB: {config['DB_HOST']}:{config['DB_PORT']}")
+            
             # Create SSH tunnel
             tunnel = SSHTunnelForwarder(
                 (config['BASTION_HOST'], config['BASTION_PORT']),
@@ -57,8 +61,12 @@ class DatabaseConnection:
                 remote_bind_address=(config['DB_HOST'], config['DB_PORT']),
                 local_bind_address=('localhost', config['LOCAL_PORT'])
             )
-            tunnel.start()
             
+            print("🚀 Starting SSH tunnel...")
+            tunnel.start()
+            print(f"✅ SSH tunnel established on localhost:{config['LOCAL_PORT']}")
+            
+            print("🔌 Connecting to PostgreSQL...")
             # Connect to PostgreSQL through tunnel
             connection = psycopg2.connect(
                 host='localhost',
@@ -66,17 +74,45 @@ class DatabaseConnection:
                 database=config['DB_NAME'],
                 user=config['DB_USERNAME'],
                 password=config['DB_PASSWORD'],
-                cursor_factory=psycopg2.extras.RealDictCursor
+                cursor_factory=psycopg2.extras.RealDictCursor,
+                connect_timeout=10
             )
+            print("✅ PostgreSQL connection established!")
             
             yield connection
             
         except Exception as e:
-            raise Exception(f"Database connection failed: {str(e)}")
+            error_msg = str(e)
+            print(f"❌ Connection failed: {error_msg}")
+            
+            # Provide specific error guidance
+            if "Authentication failed" in error_msg:
+                print("💡 SSH authentication failed. Check:")
+                print("   - SSH key file path and permissions (chmod 600)")
+                print("   - SSH key format (should be OpenSSH private key)")
+                print("   - Bastion host IP address")
+            elif "Connection refused" in error_msg:
+                print("💡 Connection refused. Check:")
+                print("   - Bastion host is running and accessible")
+                print("   - Security group allows SSH (port 22)")
+                print("   - Network connectivity")
+            elif "timeout" in error_msg.lower():
+                print("💡 Connection timeout. Check:")
+                print("   - Network connectivity to bastion host")
+                print("   - Bastion host security group settings")
+            elif "database" in error_msg.lower():
+                print("💡 Database connection failed. Check:")
+                print("   - Database credentials (username/password)")
+                print("   - Database name and host")
+                print("   - RDS security group allows connections from bastion")
+            
+            raise Exception(f"Database connection failed: {error_msg}")
         finally:
             if connection:
+                print("🔌 Closing PostgreSQL connection...")
                 connection.close()
             if tunnel:
+                print("🚪 Stopping SSH tunnel...")
                 tunnel.stop()
 
 

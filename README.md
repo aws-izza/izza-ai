@@ -1,179 +1,166 @@
-# Strands Agents Workshop Starter Kit
+# 제조업 입지추천 플랫폼 🏭
 
-🎭 **Multi-Agent System Workshop using Agents as Tools Pattern**
+울산 지역 제조업 기업 확장을 위한 AI 기반 입지추천 시스템
 
-This starter kit provides basic templates for a workshop that implements the Agents as Tools pattern using Strands Agents and Amazon Bedrock.
+## 🎯 프로젝트 개요
 
-## 🚀 Quick Start
+- **목표**: 울산 지역 제조업 기업 확장을 위한 AI 기반 입지추천 시스템
+- **핵심 기능**: 토지 가격, 토지 분류, 전기세 기반 100점 만점 가중치 점수 계산
+- **사용자**: 기업 확장팀
+- **데이터 소스**: 공공데이터 API, RDS 데이터베이스
 
-### 1. Environment Setup
+## 🏗️ 시스템 아키텍처
 
+```
+사용자 입력 → Orchestrator Agent → Planning Agent → 전문 Sub-Agents → 최종 응답
+```
+
+### 전문 Sub-Agents (Phase 2 개발 예정)
+1. **Location Analysis Agent**: 토지 분석
+2. **Cost Analysis Agent**: 비용 분석  
+3. **Policy Analysis Agent**: 정책 분석
+4. **Scoring Agent**: 가중치 점수 계산
+
+## 📊 Phase 1 완료 사항 (25% 진행률)
+
+### ✅ 1. 가중치 점수 계산 시스템
+**파일**: `src/tools/scoring_tools.py`
+- weight_logic.doc 기반 100점 만점 점수 계산
+- 5가지 정규화 방식 (above, below, range, match, tolerance)
+- 제조업 특화 울산 지역 기준값 설정
+
+### ✅ 2. 데이터베이스 연결 시스템  
+**파일**: `src/tools/database_tools.py`
+- SSH 터널을 통한 보안 PostgreSQL 연결
+- database_agent로 스키마 조회 및 쿼리 실행
+
+### ✅ 3. 울산 제조업 특화 공공데이터 API
+**파일**: `public_api_integration.py`
+- 5개 API 통합: 정책, 공시지가, 전기요금, 인프라, 재난통계
+
+### ✅ 4. 템플릿 및 데모 시스템
+**파일**: `templates/phase1-scoring_system.py`
+- Phase 1 기능 통합 데모 및 테스트
+
+## 🚀 빠른 시작
+
+### 환경 설정
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd strands-agents-workshop-starter-kit
+# 의존성 설치
+pip install -r requirements.txt
 
-# Grant execution permissions
-chmod +x run.sh
-
-# Set up environment variables
+# 환경 변수 설정 (.env 파일)
 cp .env.example .env
-# Edit .env file to add AWS configuration
+# DB 연결 정보 및 API 키 설정
 ```
 
-### 2. Automatic Execution
-
+### Phase 1 데모 실행
 ```bash
-# Create virtual environment, install packages, and run app all at once
-./run.sh
+# 가중치 점수 계산 시스템 데모
+python templates/phase1-scoring_system.py
+
+# 메인 애플리케이션 (데이터베이스 연동)
+python main.py
+# 입력: "토지데이터 스키마와 샘플 하나를 가져와줘"
 ```
 
-## 📁 Project Structure
+## 📋 가중치 점수 계산 예시
 
-```
-strands-agents-workshop-starter-kit/
-├── README.md                    # This file
-├── requirements.txt             # Dependencies list
-├── run.sh                      # Automatic execution script
-├── .env.example                # Environment variables template
-├── model_config.py             # Model configuration (template)
-├── mcp_tools.py               # MCP tools (template)
-├── sub_agents.py              # Sub agents (template)
-├── orchestrator_agent.py      # Orchestrator (template)
-├── main.py                    # Main app (template)
-├── workshop_test.py           # Test script
-└── templates/                 # Step-by-step completed code reference
-    ├── lab2-mcp_tools.py
-    ├── lab3-sub_agents.py
-    ├── lab4-orchestrator_agent.py
-    └── lab5-main.py
+### 기본 가중치 (제조업 특화)
+```python
+{
+    "land_price": 25.0,        # 공시지가 (가장 중요)
+    "electricity_rate": 20.0,  # 전기요금
+    "zone_type": 15.0,         # 용도지역
+    "land_area": 10.0,         # 토지면적
+    "substation_density": 8.0, # 변전소 밀도
+    "transmission_density": 7.0, # 송전탑 밀도
+    "population_density": 5.0,   # 인구밀도
+    "disaster_count": 5.0,       # 재난 발생 빈도
+    "policy_support": 5.0        # 정책 지원
+}
 ```
 
-## 🎯 Workshop Progress Order
+### 샘플 계산 결과
+```
+🎯 최종 점수: 78.5점 (B+ 양호)
 
-1. **Lab 1**: Environment Setup - Set up this starter kit
-2. **Lab 2**: MCP Tools Creation - Implement `mcp_tools.py`
-3. **Lab 3**: Sub Agents Implementation - Implement `sub_agents.py`
-4. **Lab 4**: Orchestrator Agent - Implement `orchestrator_agent.py`
-5. **Lab 5**: Agents as Tools Pattern - Implement `main.py`
-
-## 🔧 Key Features
-
-- **🎭 Orchestrator Agent**: Request analysis and sub-agent coordination
-- **🔍 Search Agent**: Intelligent search (Wikipedia + DuckDuckGo)
-- **🌤️ Weather Agent**: Location-based weather information query
-- **🗄️ Database Agent**: PostgreSQL database queries via SSH tunnel
-- **💬 Conversation Agent**: Natural conversation processing
-- **🤖 Bedrock Integration**: Amazon Bedrock Claude model utilization
-
-## 📝 Environment Variables Setup
-
-Add the following configuration to your `.env` file:
-
-```bash
-# AWS Configuration (Temporary Credentials)
-AWS_REGION=ap-northeast-2
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-AWS_SESSION_TOKEN=your_session_token
-
-# Bedrock Model Configuration
-MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
-
-# Database Configuration (PostgreSQL via SSH Tunnel)
-DB_HOST=izza-db.cji28gw0m12f.ap-northeast-2.rds.amazonaws.com
-DB_PORT=5432
-DB_NAME=your_database_name
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-
-# SSH Tunnel Configuration
-BASTION_HOST=your_bastion_public_ip
-BASTION_USER=ec2-user
-BASTION_PORT=22
-SSH_KEY_PATH=path/to/your/key.pem
-LOCAL_PORT=5432
+📋 세부 점수 분석:
+   land_price: 0.825 × 25% = 0.206
+   electricity_rate: 0.750 × 20% = 0.150
+   zone_type: 1.000 × 15% = 0.150
+   ...
 ```
 
-### Database Setup (Optional)
+## 🗂️ 프로젝트 구조
 
-The Database Agent connects to PostgreSQL via SSH tunnel through a bastion host:
-
-1. **Prerequisites**:
-   - PostgreSQL RDS instance in private subnet
-   - EC2 bastion host in public subnet
-   - SSH key pair for bastion host access
-
-2. **Configuration**:
-   - Update database connection details in `.env`
-   - Ensure SSH key file has proper permissions: `chmod 400 your-key.pem`
-   - Test SSH tunnel manually: `ssh -i your-key.pem ec2-user@bastion-ip`
-
-3. **Security**:
-   - Only SELECT queries are allowed for safety
-   - Results are limited to prevent performance issues
-   - All database credentials are environment-based
-
-## 🧪 Testing
-
-```bash
-# Individual component testing
-python3 mcp_tools.py
-python3 sub_agents.py
-python3 orchestrator_agent.py
-
-# Integrated system testing
-python3 workshop_test.py
-
-# Main application execution
-python3 main.py
+```
+├── src/
+│   ├── agents/           # 에이전트 구현
+│   │   ├── orchestrator_agent.py
+│   │   └── sub_agents.py
+│   ├── tools/            # 핵심 도구들
+│   │   ├── scoring_tools.py      # ✅ 가중치 계산
+│   │   ├── database_tools.py     # ✅ DB 연결
+│   │   └── mcp_tools.py         # MCP 도구들
+│   └── config/           # 설정 파일들
+├── templates/            # 단계별 템플릿
+│   └── phase1-scoring_system.py  # ✅ Phase 1 데모
+├── public_api_integration.py     # ✅ 울산 특화 API
+├── main.py              # 메인 애플리케이션
+└── README.md           # 이 파일
 ```
 
-## 📚 Reference Code
+## 📈 개발 로드맵
 
-Completed code for each step can be found in the `templates/` folder:
+### ✅ Phase 1: 기반 구조 설정 (완료)
+- [x] 프로젝트 구조 분석
+- [x] 데이터베이스 연결 에이전트 구현
+- [x] 공공데이터 API 통합 확장
+- [x] 가중치 계산 로직 구현
 
-- `lab2-mcp_tools.py`: MCP tools completed code
-- `lab3-sub_agents.py`: Sub agents completed code
-- `lab4-orchestrator_agent.py`: Orchestrator completed code
-- `lab5-main.py`: Complete system code
+### ⏳ Phase 2: 전문 에이전트 개발 (다음 단계)
+- [ ] Location Analysis Agent (토지 분석)
+- [ ] Cost Analysis Agent (비용 분석)
+- [ ] Policy Analysis Agent (정책 분석)
+- [ ] Scoring Agent (가중치 점수 계산)
 
-## 🆘 Troubleshooting
+### ⏳ Phase 3: 오케스트레이터 통합
+- [ ] Manufacturing Location Orchestrator 구현
+- [ ] 에이전트 간 데이터 흐름 최적화
+- [ ] 토큰 사용량 최적화
 
-### Common Issues
+### ⏳ Phase 4: 사용자 인터페이스
+- [ ] 입지 추천 메인 애플리케이션
+- [ ] 결과 시각화 및 리포트 생성
+- [ ] 테스트 및 검증
 
-1. **Model Access Error**
-   - Check AWS credentials
-   - Verify Bedrock service permissions
-   - Confirm region settings
+## 🔧 기술 스택
 
-2. **Package Installation Error**
-   - Check Python 3.10+ version
-   - Verify virtual environment activation
-   - Check network connection
+- **Framework**: Strands Agents
+- **LLM**: Amazon Bedrock (Claude)
+- **Database**: PostgreSQL (RDS)
+- **APIs**: 울산 특화 공공데이터 5개
+- **Language**: Python 3.8+
 
-3. **API Call Error**
-   - Check internet connection
-   - Verify API limits
-   - Check timeout settings
+## 📊 성공 지표
 
-## 🎓 Learning Objectives
+- 입지 점수 정확도 90% 이상
+- API 응답 시간 5초 이내  
+- 토큰 사용량 요청당 1000토큰 이하
 
-Through this workshop, you can learn:
+## 🤝 기여 방법
 
-- **Agents as Tools Pattern**: AI-based dynamic tool selection
-- **Hierarchical Agent Structure**: Orchestrator and sub-agents
-- **Intelligent Orchestration**: Request analysis and execution planning
-- **Practical Application**: Architecture applicable in production environments
+1. 이슈 생성 또는 기존 이슈 확인
+2. 브랜치 생성 (`git checkout -b feature/새기능`)
+3. 변경사항 커밋 (`git commit -am '새기능 추가'`)
+4. 브랜치 푸시 (`git push origin feature/새기능`)
+5. Pull Request 생성
 
-## 📞 Support
+## 📝 라이선스
 
-If you encounter issues during the workshop:
-
-1. Check reference code in the `templates/` folder
-2. Refer to comments and docstrings in each file
-3. Contact workshop facilitator
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.
 
 ---
 
-**Happy Coding! 🚀**
+**현재 진행률**: 25% (Phase 1 완료) | **다음 단계**: Phase 2 전문 에이전트 개발

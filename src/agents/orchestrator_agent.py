@@ -1,7 +1,7 @@
 """Orchestrator Agent - Strands Agents Workshop"""
 from strands import Agent
-from sub_agents import search_agent, weather_agent, conversation_agent, planning_agent, database_agent
-from model_config import get_configured_model
+from ..agents.sub_agents import search_agent, weather_agent, conversation_agent, planning_agent, database_agent, scoring_agent
+from ..config.model_config import get_configured_model
 from typing import Dict, Any
 import re
 
@@ -39,6 +39,7 @@ Available sub-agents:
 • search_agent: Information search (Wikipedia + DuckDuckGo)
 • weather_agent: Weather information (US regions only)
 • database_agent: PostgreSQL database queries and analysis
+• scoring_agent: Manufacturing location scoring and analysis (NEW)
 • conversation_agent: General conversation
 
 Execution sequence:
@@ -52,7 +53,7 @@ Show progress after each agent execution:
         return Agent(
            model=self.model,
            system_prompt=system_prompt,
-           tools=[planning_agent, search_agent, weather_agent, database_agent, conversation_agent]
+           tools=[planning_agent, search_agent, weather_agent, database_agent, scoring_agent, conversation_agent]
         )
  
  

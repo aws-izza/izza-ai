@@ -2,8 +2,8 @@
 import os
 import sys
 from typing import Dict, Any
-from orchestrator_agent import OrchestratorAgent
-from model_config import get_configured_model
+from src.agents.orchestrator_agent import OrchestratorAgent
+from src.config.model_config import get_configured_model
 
 
 class StrandsAgentsWorkshopApp:

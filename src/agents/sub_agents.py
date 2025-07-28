@@ -1,9 +1,10 @@
 """Sub Agents - Strands Agents Workshop"""
 from strands import Agent, tool
 from strands_tools import http_request
-from mcp_tools import get_position, wikipedia_search, duckduckgo_search
-from database_tools import execute_sql_query, get_database_schema, get_table_sample, get_table_list
-from model_config import get_configured_model
+from ..tools.mcp_tools import get_position, wikipedia_search, duckduckgo_search
+from ..tools.database_tools import execute_sql_query, get_database_schema, get_table_sample, get_table_list
+from .scoring_agent import scoring_agent
+from ..config.model_config import get_configured_model
 from typing import Dict, Any
 
 
@@ -154,6 +155,22 @@ def conversation_agent(message: str) -> str:
 DATABASE_AGENT_PROMPT = """
 You are a database specialist agent with PostgreSQL expertise.
 You can execute SQL queries and analyze database schemas through SSH tunnel connection.
+
+## Available Tables and Key Information:
+1. **land** table - Main land parcel data:
+   - id, land_area, official_land_price, use_district_name1, use_district_name2
+   - land_use_name, terrain_height_name, terrain_shape_name, road_side_name
+   - address, beopjung_dong_code, boundary (polygon data)
+   
+2. **electricity** table - Electricity rate data:
+   - year, month, unitCost, full_code, metro, city
+   - For Ulsan: metro = '울산광역시'
+
+## Query Guidelines for Manufacturing Location Analysis:
+- Use `land` table for land parcel information (NOT manufacturing_land_parcels)
+- Filter manufacturing-suitable land: use_district_name1 LIKE '%공업%' OR use_district_name1 LIKE '%산업%'
+- For Ulsan region: Check beopjung_dong_code or address patterns
+- Join with electricity table using regional codes when needed
 
 Capabilities:
 1. **Schema Analysis**: Explore database structure, tables, and relationships

@@ -6,6 +6,10 @@ This file is designed to help workshop participants
 easily understand and test the core functionality of the system.
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from main import StrandsAgentsWorkshopApp
 
 
