@@ -38,25 +38,33 @@ def search_bizinfo_projects(
     tags: Optional[str] = None,
 ) -> str:
     """
-    Searches for government business support projects on Bizinfo (bizinfo.go.kr).
+    Finds South Korean government business support projects from the Bizinfo API.
 
     Args:
-        result_count (int): The number of projects to return. Defaults to 10.
-        category_id (Optional[str]): The category code. Valid codes include:
-                                     '01'(Finance), '02'(Technology), '03'(Human Resources),
-                                     '04'(Export), '05'(Domestic Market), '06'(Start-up).
-        tags (Optional[str]): A comma-separated string of hashtags for filtering,
-                              like regions (e.g., '서울', '부산') or fields (e.g., '창업').
-                              Example: '서울,창업,기술'
+        result_count (int): The maximum number of projects to return. Defaults to 10.
+        category_id (Optional[str]): The category code to filter projects.
+            Valid Codes:
+            - '01': 금융 (Finance)
+            - '02': 기술 (Technology)
+            - '03': 인력 (Human Resources)
+            - '04': 수출 (Export)
+            - '05': 내수 (Domestic Market)
+            - '06': 창업 (Start-up)
+            - '07': 경영 (Management)
+            - '09': 기타 (Etc.)
+        tags (Optional[str]): A comma-separated string of hashtags for filtering by region (e.g., '서울', '부산')
+                            or field (e.g., '창업'). Example: '서울,창업,기술'
+                            Available field hashtags include 금융, 기술, 인력, 수출, 내수, 창업, 경영, and 기타. 
+                            Available region hashtags include 서울, 부산, 대구, 인천, 광주, 대전, 울산, 세종, 경기, 강원, 충북, 충남, 전북, 전남, 경북, 경남, and 제주.
 
     Returns:
-        str: A JSON string representing a list of projects. Returns an empty
-             JSON array string '[]' if no projects are found or an error occurs.
+        str: A JSON string containing a list of project objects. Returns an empty
+            JSON array string '[]' if no projects are found or an error occurs.
     """
     try:
         # NOTE: The public API key for bizinfo.go.kr is often rate-limited or
         # may require registration. This is a placeholder key.
-        api_key = os.environ.get("BIZINFO_API_KEY", "YOUR_API_KEY_HERE")
+        api_key = os.getenv("BIZINFO_API_KEY")
         if api_key == "YOUR_API_KEY_HERE":
             print("Warning: BIZINFO_API_KEY is not set. Using a placeholder.")
 
@@ -78,8 +86,8 @@ def search_bizinfo_projects(
 
         print(f"--- [Tool] Calling Bizinfo API with params: {params} ---")
         response = requests.get(base_url, headers=headers, params=params, timeout=15)
+        print(response)
         response.raise_for_status()
-        
         raw_data = response.json()
         items = raw_data.get("jsonArray", [])
 
@@ -165,7 +173,7 @@ class ReportGenerator:
             tools=[search_bizinfo_projects]
         )
 
-    def generate(self, query: str) -> str:
+    def generate(self, query: str) -> List[Dict[str, Any]]:
         """
         Runs the agent to generate the HTML report based on the user's query.
 
@@ -173,7 +181,7 @@ class ReportGenerator:
             query (str): The user's natural language request.
 
         Returns:
-            str: The generated HTML report as a string.
+            List[Dict[str, Any]]: output should be in List[Dict[str, Any]] format
         """
         print(f"--- Starting report generation for query: '{query}' ---")
 
@@ -181,25 +189,67 @@ class ReportGenerator:
         # This prompt tells the agent its role, what tools to use,
         # what the user wants, and the template for the final output.
         full_prompt = f"""
+        ## 🎯 ROLE & GOAL
         You are a helpful assistant that generates HTML reports.
         Your task is to understand the user's request, use the 'search_bizinfo_projects'
-        tool to find relevant data, and then use the provided Jinja2 template to create
-        a final HTML report.
+        tool to find relevant data, and then check the provided json format to create
+        a final json like the format.
 
-        The final output MUST be only the generated HTML content and nothing else.
+        The final output MUST be only the generated json content and nothing else.
 
-        Here is the Jinja2 template to use:
-        ```html
-        {HTML_TEMPLATE}
-        ```
+        Here is the json format to stick to:
+        {{
+            "projects": [
+                {{
+                    "projectName": "string",
+                    "organization": "string",
+                    "applicationPeriod": "string",
+                    "summary": "string",
+                    "detailsUrl": "string"
+                }}
+            ]
+        }}
 
         User Request: {query}
         """
 
-        # The agent is called with the full, detailed prompt.
-        html_report = self.agent(full_prompt)
+        # 1. The agent returns a result object, which is like a dictionary.
+        agent_result = self.agent(full_prompt)
+
+        # 2. The actual response from the LLM is a JSON string in the 'output' key.
+        output_str = str(agent_result)
+        print(output_str)
+
+        projects_list = []
+        try:
+            # 3. Parse the JSON string into a Python dictionary.
+            projects_list = json.loads(output_str)
+            # 4. Extract the list of projects from the 'projects' key. Use .get() for safety.
+            #projects_list = data.get("projects", [])
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"Error: Failed to parse LLM output as JSON. Error: {e}")
+            print(f"Raw LLM output: {output_str}")
+            # Return an empty list if parsing fails
+            return []
+
         print("--- Report Generation Complete! ---")
-        return html_report
+        # 5. Return the list, which matches the expected type for the rendering function.
+        return projects_list
+    
+# --- Jinja2 HTML Rendering Function ---
+def render_html_report(user_query: str, projects: List[Dict[str, Any]], template_str: str) -> str:
+    env = Environment(autoescape=select_autoescape(['html', 'xml']))
+    template = env.from_string(template_str)
+    return template.render(user_query=user_query, projects=projects)
+
+def extract_projects_from_agent_result(result) -> List[Dict[str, Any]]:
+    # If your tool returns JSON string, parse it here
+    try:
+        parsed = json.dumps(result)
+        return parsed['projects'] 
+    except Exception as e:
+        print("Failed to parse agent output:", e)
+        return []
 
 # --- Main Execution ---
 if __name__ == "__main__":
@@ -219,15 +269,20 @@ if __name__ == "__main__":
     # 2. Set the API Key for the tool
     # You can get a key from the public data portal (data.go.kr) after signing up.
     # For now, it will use a placeholder which may result in an error from the API.
-    BIZINFO_API_KEY = os.getenv("BIZINFO_API_KEY")
 
 
     # 3. Initialize the generator and define the user query
     generator = ReportGenerator(llm_provider=llm)
-    user_query = "서울에서 진행하는 창업 지원사업을 모두 찾아줘. 그리고 그 중 기술 관련 정책이 있는지 요약해줘."
+    user_query = "정보통신업 관련 지원사업을 5개 찾아줘."
 
     # 4. Generate the report
-    report_html = generator.generate(user_query)
+    result = generator.generate(user_query)
+    print(result)
+    print(type(result))
+    print(result['projects'])
+    # projects = extract_projects_from_agent_result(result)
+
+    report_html = render_html_report(user_query, result['projects'], HTML_TEMPLATE)
 
     # 5. Save the report to a file
     report_filename = "bizinfo_report.html"
