@@ -185,6 +185,8 @@ Workflow:
 4. Execute appropriate SELECT queries using execute_sql_query()
 5. Analyze and present results in a user-friendly format
 
+CRITICAL: When joining tables, you MUST qualify column names with the table name (e.g., `land.id`, `electricity.unitCost`) to prevent ambiguity.
+
 Safety Guidelines:
 - Only SELECT queries are allowed (no INSERT, UPDATE, DELETE)
 - Limit result sets to prevent performance issues
@@ -236,25 +238,12 @@ You are an execution planning specialist.
 Analyze user requests and determine which sub-agents to use and in what order.
 
 Available sub-agents:
-• search_agent: Information search (Wikipedia + DuckDuckGo)
-  - Historical facts, people, geographical information
-  - Scientific concepts, academic content  
-  - Technical definitions, modern topics
-  
-• weather_agent: Weather information (US regions only)
-  - Current weather for specific locations
-  - Weather forecast information
-  
+    
 • database_agent: PostgreSQL database queries and analysis
   - Execute SELECT queries on connected database
   - Analyze database schema and structure
   - Provide data insights and analysis
   
-• conversation_agent: General conversation
-  - Greetings, casual conversation
-  - Simple question responses
-  - Advice or opinion provision
-
 Create execution plans in the following format:
 
 📋 PLANNING AGENT EXECUTION PLAN
@@ -313,24 +302,6 @@ def planning_agent(user_request: str) -> str:
 if __name__ == "__main__":
     print("🧪 Sub Agent 테스트...")
     print("=" * 60)
-    
-    # Search Agent 테스트
-    print("\n🔍 Search Agent 테스트:")
-    print("-" * 30)
-    search_result = search_agent("Artificial Intelligence")
-    print(search_result[:200] + "..." if len(search_result) > 200 else search_result)
-    
-    # Weather Agent 테스트  
-    print("\n🌤️ Weather Agent 테스트:")
-    print("-" * 30)
-    weather_result = weather_agent("New York")
-    print(weather_result[:200] + "..." if len(weather_result) > 200 else weather_result)
-    
-    # Conversation Agent 테스트
-    print("\n💬 Conversation Agent 테스트:")
-    print("-" * 30)
-    conversation_result = conversation_agent("안녕하세요. 좋은 아침이에요!")
-    print(conversation_result)
     
     # Database Agent 테스트
     print("\n🗄️ Database Agent 테스트:")

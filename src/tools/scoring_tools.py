@@ -108,7 +108,7 @@ def calculate_location_score(land_data: Dict[str, Any], weights: Dict[str, float
             "policy_support": {"min": 0, "max": 10, "type": "range"}
         }
         
-        # 실제 데이터베이스 필드명 매핑
+        # 실제 데이터베이스 필드명 매핑 (확장성 고려)
         field_mapping = {
             "land_area": "land_area",                    # land 테이블 직접 매핑
             "land_price": "official_land_price",         # land 테이블 공시지가
@@ -117,7 +117,7 @@ def calculate_location_score(land_data: Dict[str, Any], weights: Dict[str, float
             "terrain_height": "terrain_height_name",     # land 테이블 지형고저
             "terrain_shape": "terrain_shape_name",       # land 테이블 지형형상
             "road_access": "road_side_name",             # land 테이블 도로접면
-            "electricity_rate": "unitCost"               # electricity 테이블 전기요금
+            "electricity_rate": "electricity_rate"       # 전처리된 전기요금 데이터
         }
         
         # 각 지표별 점수 계산

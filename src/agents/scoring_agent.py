@@ -1,7 +1,7 @@
 """Scoring Agent - 제조업 입지 가중치 점수 계산 전문 에이전트"""
 from strands import Agent, tool
 from ..tools.scoring_tools import calculate_location_score, get_default_weights, validate_land_data
-from ..tools.electricity_tools import get_ulsan_electricity_rate, calculate_manufacturing_electricity_cost
+from ..tools.electricity_tools import get_electricity_rate_by_region, get_ulsan_electricity_rate, calculate_manufacturing_electricity_cost
 from ..tools.database_tools import execute_sql_query
 from ..config.model_config import get_configured_model
 from typing import Dict, Any
@@ -89,7 +89,13 @@ def scoring_agent(scoring_request: str) -> str:
         )
         
         response = agent(f"점수 계산 요청을 처리해주세요: {scoring_request}")
-        return str(response)
+        
+        # 응답이 비어있는지 확인하고, 비어있다면 기본 메시지 반환
+        response_str = str(response).strip()
+        if not response_str:
+            return "점수 계산 에이전트가 응답을 생성하지 못했습니다. 요청을 다시 확인해주세요."
+            
+        return response_str
         
     except Exception as e:
         return f"점수 계산 에이전트 오류: {str(e)}"
@@ -135,15 +141,26 @@ def get_sample_land_for_scoring(location_filter: str = "공업지역") -> Dict[s
         result = execute_sql_query(query)
         
         if result['success'] and result['data']:
-            # 전기요금 데이터 추가
-            electricity_data = get_ulsan_electricity_rate(2024)
-            avg_electricity_rate = electricity_data.get('statistics', {}).get('average_rate', 88.0)
+            # 개선된 전기요금 데이터 조회 (확장성 고려)
+            electricity_data = get_electricity_rate_by_region("울산광역시", 2024)
+            
+            # 전기요금 정보 추출 (실패 시 기본값 사용)
+            if electricity_data.get('success', False):
+                avg_electricity_rate = electricity_data.get('statistics', {}).get('average_rate', 88.0)
+                electricity_source = f"울산 DB 데이터 {avg_electricity_rate}원/kWh"
+                has_real_data = electricity_data.get('query_info', {}).get('has_real_data', False)
+                
+                if not has_real_data:
+                    electricity_source += " (기본값 사용)"
+            else:
+                avg_electricity_rate = 88.0  # 울산 제조업 평균 기본값
+                electricity_source = "울산 기본값 88.0원/kWh (DB 조회 실패)"
             
             # 점수 계산용 데이터 형식으로 변환
             scoring_ready_data = []
             for land in result['data']:
                 scoring_data = {
-                    # 실제 DB 데이터
+                    # 실제 DB 데이터 (컬럼명 정규화)
                     "id": land.get("id"),
                     "land_area": land.get("land_area", 0),
                     "land_price": land.get("official_land_price", 0),
@@ -154,10 +171,10 @@ def get_sample_land_for_scoring(location_filter: str = "공업지역") -> Dict[s
                     "road_access": land.get("road_side_name", ""),
                     "address": land.get("address", ""),
                     
-                    # 전기요금 데이터 추가
+                    # 전기요금 데이터 (확장성 있는 구조)
                     "electricity_rate": avg_electricity_rate,
                     
-                    # 외부 데이터로 보완 (울산 평균값)
+                    # 외부 데이터로 보완 (울산 평균값 - 추후 API 연동 가능)
                     "substation_density": 3.5,
                     "transmission_density": 2.2,
                     "population_density": 2900,
@@ -170,8 +187,13 @@ def get_sample_land_for_scoring(location_filter: str = "공업지역") -> Dict[s
                 "success": True,
                 "data_count": len(scoring_ready_data),
                 "lands": scoring_ready_data,
-                "electricity_rate_source": f"울산 평균 {avg_electricity_rate}원/kWh",
-                "filter_applied": location_filter
+                "electricity_rate_source": electricity_source,
+                "filter_applied": location_filter,
+                "data_quality": {
+                    "land_data_from_db": True,
+                    "electricity_data_from_db": has_real_data if 'has_real_data' in locals() else False,
+                    "external_data_estimated": True
+                }
             }
         else:
             return {

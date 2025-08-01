@@ -1,6 +1,7 @@
 """Orchestrator Agent - Strands Agents Workshop"""
 from strands import Agent
-from ..agents.sub_agents import search_agent, weather_agent, conversation_agent, planning_agent, database_agent, scoring_agent
+from ..agents.sub_agents import planning_agent, database_agent
+from ..agents import scoring_agent
 from ..config.model_config import get_configured_model
 from typing import Dict, Any
 import re
@@ -35,9 +36,6 @@ CRITICAL: For all requests, first use planning_agent to create an execution plan
 then execute other sub-agents sequentially according to that plan.
 
 Available sub-agents:
-• planning_agent: Create execution plans (always use first)
-• search_agent: Information search (Wikipedia + DuckDuckGo)
-• weather_agent: Weather information (US regions only)
 • database_agent: PostgreSQL database queries and analysis
 • scoring_agent: Manufacturing location scoring and analysis (NEW)
 • conversation_agent: General conversation
@@ -53,7 +51,7 @@ Show progress after each agent execution:
         return Agent(
            model=self.model,
            system_prompt=system_prompt,
-           tools=[planning_agent, search_agent, weather_agent, database_agent, scoring_agent, conversation_agent]
+           tools=[planning_agent,database_agent,scoring_agent]
         )
  
  
@@ -108,11 +106,9 @@ if __name__ == "__main__":
 
     # Test cases
     test_cases = [
-        ("Hello", "General conversation"),
-        ("What's the weather in Seattle?", "Weather query"),
-        ("Tell me about artificial intelligence", "Information search"),
+        
         ("데이터베이스에 어떤 테이블들이 있는지 알려줘", "Database schema query"),
-        ("Tell me about New York and also check the weather", "Complex request")
+        ("울산시에서 제조업 입지를 다섯군데 추천해줘", "Database query and scoring")
     ]
 
     for i, (query, description) in enumerate(test_cases, 1):
