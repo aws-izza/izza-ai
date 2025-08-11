@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ land_data.주소 }} AI 분석 리포트</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 24px;
+            color: #333;
+        }
+        .report-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .report-header .title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .report-header .icon {
+            font-size: 24px;
+            color: #d9534f;
+        }
+        .report-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .report-header .timestamp {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+        .report-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 16px;
+        }
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .overall-score-card {
+            text-align: center;
+        }
+        .overall-score-card .score {
+            font-size: 80px;
+            font-weight: 700;
+            color: #007bff;
+            line-height: 1;
+        }
+        .overall-score-card .score-suffix {
+            font-size: 24px;
+            font-weight: 500;
+            color: #6c757d;
+            margin-left: 4px;
+        }
+        .field-score-item {
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .field-score-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .field-score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .field-score-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .score-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-badge .score-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+        .badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            color: #fff;
+        }
+        .badge-excellent { background-color: #007bff; }
+        .badge-good { background-color: #28a745; }
+        .badge-poor { background-color: #fd7e14; }
+        .field-score-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .progress-excellent { background-color: #007bff; }
+        .progress-good { background-color: #28a745; }
+        .progress-poor { background-color: #fd7e14; }
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .ai-analysis-card .content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #495057;
+        }
+        .policy-item {
+            border-top: 1px solid #f1f1f1;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+        .policy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .policy-name {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .policy-link {
+            font-size: 13px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .policy-link:hover {
+            text-decoration: underline;
+        }
+        .policy-summary {
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <header class="report-header">
+            <div class="title-group">
+                <span class="icon">📍</span>
+                <div>
+                    <h1>{{ land_data.주소 }} AI 분석 리포트 종합 결과</h1>
+                    <p class="timestamp">분석일시: {{ analysis_date }} ({{ analysis_quarter }} 기준)</p>
+                </div>
+            </div>
+        </header>
+        <!-- Main content will be injected here during template rendering -->
+        <main class="report-body">
+            <section class="left-column">
+                <!-- 토지 기본 정보 -->
+                <div class="card">
+                    <h2 class="card-title">토지 기본 정보</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500; width: 30%;">주소</td>
+                            <td style="padding: 8px 0;">{{ land_data.주소 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">지목</td>
+                            <td style="padding: 8px 0;">{{ land_data.지목 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">용도지역</td>
+                            <td style="padding: 8px 0;">{{ land_data.용도지역 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">용도지구</td>
+                            <td style="padding: 8px 0;">{{ land_data.용도지구 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">토지이용상황</td>
+                            <td style="padding: 8px 0;">{{ land_data.토지이용상황 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">지형고저</td>
+                            <td style="padding: 8px 0;">{{ land_data.지형고저 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">형상</td>
+                            <td style="padding: 8px 0;">{{ land_data.형상 }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px 0; font-weight: 500;">도로접면</td>
+                            <td style="padding: 8px 0;">{{ land_data.도로접면 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 500;">공시지가</td>
+                            <td style="padding: 8px 0;">{{ land_data.공시지가_formatted }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- 종합 평가 점수 -->
+                <div class="card overall-score-card">
+                    <h2 class="card-title">종합 평가 점수</h2>
+                    <div class="score">
+                        85<span class="score-suffix">/ 100점</span>
+                    </div>
+                </div>
+                
+                <!-- 분야별 평가 점수 -->
+                <div class="card">
+                    <h2 class="card-title">분야별 평가 점수</h2>
+                    
+                    <!-- 입지조건 -->
+                    <div class="field-score-item">
+                        <div class="field-score-header">
+                            <span class="field-score-title">입지조건</span>
+                            <div class="score-badge">
+                                <span class="score-value">86점</span>
+                                <span class="badge badge-excellent">우수</span>
+                            </div>
+                        </div>
+                        <p class="field-score-description">토지현황, 공시지가, 용도지역, 전기요금 항목을 분석한 결과입니다.</p>
+                        <div class="progress-bar">
+                            <div class="progress progress-excellent" style="width: 86%;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 인프라 -->
+                    <div class="field-score-item">
+                        <div class="field-score-header">
+                            <span class="field-score-title">인프라</span>
+                            <div class="score-badge">
+                                <span class="score-value">78점</span>
+                                <span class="badge badge-good">양호</span>
+                            </div>
+                        </div>
+                        <p class="field-score-description">변전소, 송전탑, 인구밀도 항목을 분석한 결과입니다.</p>
+                        <div class="progress-bar">
+                            <div class="progress progress-good" style="width: 78%;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 안정성 -->
+                    <div class="field-score-item">
+                        <div class="field-score-header">
+                            <span class="field-score-title">안정성</span>
+                            <div class="score-badge">
+                                <span class="score-value">48점</span>
+                                <span class="badge badge-poor">미흡</span>
+                            </div>
+                        </div>
+                        <p class="field-score-description">연간 재난문자, 정책 관련 지원 대상 항목을 분석한 결과입니다.</p>
+                        <div class="progress-bar">
+                            <div class="progress progress-poor" style="width: 48%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="right-column">
+                <div class="card ai-analysis-card">
+                    <h2 class="card-title">AI 분석 결과</h2>
+                    <div class="content">
+                        {{ ai_analysis | safe }}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">관련 정책 및 규제사항</h2>
+                    {% if policies %}
+                    {% for policy in policies %}
+                    <div class="policy-item">
+                        <div class="policy-header">
+                            <span class="policy-name">{{ policy.name }}</span>
+                            {% if policy.url %}
+                            <a href="{{ policy.url }}" class="policy-link" target="_blank">🔗 링크 바로가기</a>
+                            {% endif %}
+                        </div>
+                        <p class="policy-summary">{{ policy.summary }}</p>
+                        {% if policy.organization %}
+                        <p style="font-size: 13px; color: #888; margin-top: 4px;">주관: {{ policy.organization }} | 기간: {{ policy.period }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="policy-item">
+                        <p style="color: #888; text-align: center; padding: 20px;">해당 지역과 관련된 정부 지원 정책 정보를 찾지 못했습니다.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
