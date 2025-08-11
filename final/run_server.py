@@ -47,7 +47,7 @@ def check_dependencies():
     return True
 
 def main():
-    print("🚀 토지 분석 AI 서비스 시작 준비")
+    print("🚀 토지 분석 AI 서비스 API 시작 준비")
     print("=" * 50)
     
     # 디렉토리 생성
@@ -58,8 +58,10 @@ def main():
         sys.exit(1)
     
     print("\n✅ 모든 준비가 완료되었습니다!")
-    print("🌐 서버를 시작합니다...")
-    print("📍 http://localhost:8000 에서 접속 가능합니다.")
+    print("🌐 MSA JSON API 서버를 시작합니다...")
+    print("📍 API 문서: http://localhost:8000/docs")
+    print("📍 API 정보: http://localhost:8000")
+    print("🧪 테스트: python test_json_api.py")
     print("=" * 50)
     
     # FastAPI 서버 실행

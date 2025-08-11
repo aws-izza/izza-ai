@@ -588,36 +588,46 @@ def render_html_report(user_query: str, analysis_result: Dict[str, Any], templat
     except Exception as e:
         return f"<html><body><h1>HTML 보고서 생성 오류</h1><p>{str(e)}</p></body></html>"
 
-def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
+def run_land_analysis_inference(land_data_input) -> Dict[str, Any]:
     """
     토지 분석 추론을 실행하고 구조화된 결과를 반환합니다.
     
     Args:
-        land_data_str: 토지 정보 문자열
+        land_data_input: 토지 정보 (문자열 또는 딕셔너리)
         
     Returns:
         분석 결과 딕셔너리 (템플릿 렌더링용)
     """
     try:
-        # 문자열 데이터를 딕셔너리로 파싱
-        land_data = {}
-        clean_data = land_data_str.replace("'", "").strip()
-        
-        items = clean_data.split(', ')
-        for item in items:
-            if ':' in item:
-                parts = item.split(':', 1)
-                if len(parts) == 2:
-                    key = parts[0].strip()
-                    value = parts[1].strip()
-                    
-                    if key == '공시지가':
-                        try:
-                            value = int(value)
-                        except ValueError:
-                            pass
-                    
-                    land_data[key] = value
+        # 입력 데이터 타입에 따라 처리
+        if isinstance(land_data_input, dict):
+            # JSON 딕셔너리인 경우
+            land_data = land_data_input.copy()
+            # 문자열 형태로도 변환 (기존 에이전트 호환성)
+            land_data_str = ", ".join([f"'{k}': '{v}'" for k, v in land_data.items()])
+        elif isinstance(land_data_input, str):
+            # 기존 문자열 형태인 경우
+            land_data_str = land_data_input
+            land_data = {}
+            clean_data = land_data_str.replace("'", "").strip()
+            
+            items = clean_data.split(', ')
+            for item in items:
+                if ':' in item:
+                    parts = item.split(':', 1)
+                    if len(parts) == 2:
+                        key = parts[0].strip()
+                        value = parts[1].strip()
+                        
+                        if key == '공시지가':
+                            try:
+                                value = int(value)
+                            except ValueError:
+                                pass
+                        
+                        land_data[key] = value
+        else:
+            raise ValueError("지원하지 않는 데이터 형식입니다.")
         
         if not land_data or '주소' not in land_data:
             raise ValueError("토지 데이터 파싱 오류: 주소 정보가 없습니다.")
@@ -656,17 +666,30 @@ def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
 def main():
     """메인 오케스트레이터 실행"""
     
-    # 테스트 데이터
-    test_land_data = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
+    # 테스트 데이터 (JSON 형식)
+    test_land_data_json = {
+        '주소': '대구광역시 중구 동인동1가 2-1',
+        '지목': '대',
+        '용도지역': '중심상업지역',
+        '용도지구': '지정되지않음',
+        '토지이용상황': '업무용',
+        '지형고저': '평지',
+        '형상': '세로장방',
+        '도로접면': '광대소각',
+        '공시지가': 3735000
+    }
+    
+    # 기존 문자열 형식도 지원
+    test_land_data_str = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
     
     print("🚀 토지 분석 오케스트레이터 시작")
-    print(f"📍 분석 대상: {test_land_data}")
+    print(f"📍 분석 대상 (JSON): {test_land_data_json}")
     print("=" * 80)
     
     try:
-        # 1. AI 추론 실행 (에이전트 호출)
-        print("🤖 AI 추론 실행 중...")
-        analysis_result = run_land_analysis_inference(test_land_data)
+        # 1. AI 추론 실행 (JSON 데이터로 테스트)
+        print("🤖 AI 추론 실행 중 (JSON 입력)...")
+        analysis_result = run_land_analysis_inference(test_land_data_json)
         
         if 'error' in analysis_result:
             print(f"⚠️ 분석 중 오류 발생: {analysis_result['error']}")
@@ -684,7 +707,9 @@ def main():
         
         # 3. HTML 보고서 렌더링 (Jinja2 분리)
         print("🎨 HTML 보고서 렌더링 중...")
-        report_html = render_html_report(test_land_data, analysis_result, "template.html")
+        # JSON 데이터를 문자열로 변환하여 기존 템플릿과 호환
+        land_data_str_for_template = ", ".join([f"'{k}': '{v}'" for k, v in test_land_data_json.items()])
+        report_html = render_html_report(land_data_str_for_template, analysis_result, "template.html")
         
         # 4. HTML 보고서 파일 저장
         report_filename = f"토지분석보고서_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
