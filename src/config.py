@@ -9,7 +9,6 @@ def get_agent_prompt(prompt: str) -> str:
         print(f"Error: {prompt} not found")
         read_prompt = ""
     
-    print(f"{prompt}:\n{read_prompt}")
     return read_prompt
 
 def knowledge_base_config(kb_id, region):

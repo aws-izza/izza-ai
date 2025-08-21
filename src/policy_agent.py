@@ -127,6 +127,7 @@ def policy_agent(query: str) -> List[Dict[str, Any]]:
 
         query_prompt = f"""
         언제나 시스템 프롬프트를 지켜서 툴을 사용하고 답변하세요.
+        답변은 언제나 정책 데이터가 담긴 json 입니다.
         {query}
         """
         

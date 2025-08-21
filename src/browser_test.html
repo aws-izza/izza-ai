@@ -104,16 +104,16 @@
         <div class="section">
             <h3>4. 직접 접속 가능한 URL</h3>
             <ul>
-                <li><a href="http://localhost:8000" target="_blank" class="url-link">API 정보</a></li>
-                <li><a href="http://localhost:8000/docs" target="_blank" class="url-link">Swagger UI 문서</a></li>
-                <li><a href="http://localhost:8000/health" target="_blank" class="url-link">헬스 체크</a></li>
-                <li><a href="http://localhost:8000/api/tasks" target="_blank" class="url-link">활성 작업 목록</a></li>
+                <li><a href="/" target="_blank" class="url-link">API 정보</a></li>
+                <li><a href="/docs" target="_blank" class="url-link">Swagger UI 문서</a></li>
+                <li><a href="/health" target="_blank" class="url-link">헬스 체크</a></li>
+                <li><a href="/api/tasks" target="_blank" class="url-link">활성 작업 목록</a></li>
             </ul>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8000';
+        const API_BASE = ''; // Use relative paths
         let currentTaskId = null;
 
         async function checkHealth() {
@@ -151,6 +151,11 @@
 
         async function startAnalysis() {
             const testData = {
+                analyze_data: {
+                    "입지조건": 86,
+                    "인프라": 78,
+                    "안정성": 48
+                },
                 land_data: {
                     "주소": "대구광역시 중구 동인동1가 2-1",
                     "지목": "대",

@@ -1,6 +1,6 @@
 from strands import Agent, tool
 from config import get_configured_model, get_agent_prompt
-from final.knowledge_agent_tool import knowledge_agent
+from knowledge_agent_tool import knowledge_agent
 from policy_agent import policy_agent
 from dotenv import load_dotenv
 import json
@@ -107,84 +107,193 @@ def policy_search_analysis(land_data: str) -> str:
     
     return policy_agent(query)
 
+
 def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, str]]:
     """
     정책 에이전트 응답을 파싱하여 템플릿용 구조화된 데이터로 변환합니다.
+    매우 강화된 파싱 로직으로 다양한 응답 형식을 처리합니다.
     """
     policies = []
     
     try:
-        # <result> 태그 내부의 JSON 찾기
-        result_start = policy_response.find('<result>')
-        result_end = policy_response.find('</result>')
+        print(f"🔍 정책 응답 분석:")
+        print(f"   타입: {type(policy_response)}")
+        print(f"   길이: {len(str(policy_response))}")
         
-        if result_start != -1 and result_end != -1:
-            # <result> 태그 내부 추출
-            result_content = policy_response[result_start + 8:result_end].strip()
+        # 문자열로 변환 및 정리
+        response_str = str(policy_response).strip()
+        
+        # 숨겨진 문자 제거
+        import re
+        response_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response_str)
+        
+        print(f"   정리 후 길이: {len(response_str)}")
+        print(f"   미리보기: {response_str[:200]}...")
+        
+        # 디버그 파일 저장 (항상 저장하여 패턴 분석)
+        debug_filename = f"policy_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        try:
+            with open(debug_filename, 'w', encoding='utf-8') as f:
+                f.write("=== POLICY AGENT RESPONSE DEBUG ===\n")
+                f.write(f"Timestamp: {datetime.now()}\n\n")
+                f.write("--- ORIGINAL RESPONSE ---\n")
+                f.write(str(policy_response))
+                f.write("\n\n--- CLEANED RESPONSE ---\n")
+                f.write(response_str)
+            print(f"📁 디버그 파일 저장: {debug_filename}")
+        except Exception as e:
+            print(f"❌ 디버그 파일 저장 실패: {str(e)}")
+        
+        # 방법 1: 이중 중괄호 처리 (가장 일반적인 문제)
+        print("🔍 이중 중괄호 처리...")
+        if '{{' in response_str and '}}' in response_str:
+            print("✅ 이중 중괄호 발견 - 단일 중괄호로 변환")
+            # 이중 중괄호를 단일 중괄호로 변환
+            cleaned_response = response_str.replace('{{', '{').replace('}}', '}')
             
-            try:
-                policy_data = json.loads(result_content)
-                projects = policy_data.get("projects", [])
+            # JSON 패턴 찾기
+            json_match = re.search(r'\{\s*"projects"\s*:\s*\[.*?\]\s*\}', cleaned_response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+                try:
+                    policy_data = json.loads(json_str)
+                    projects = policy_data.get("projects", [])
+                    print(f"✅ 이중 중괄호 처리로 {len(projects)}개 프로젝트 파싱")
+                    policies.extend(extract_policies_from_projects(projects))
+                except json.JSONDecodeError as e:
+                    print(f"❌ 이중 중괄호 처리 후 JSON 파싱 실패: {e}")
+        
+        # 방법 2: <result> 태그 파싱
+        if not policies:
+            print("🔍 <result> 태그 검색...")
+            result_match = re.search(r'<result>(.*?)</result>', response_str, re.DOTALL)
+            if result_match:
+                print("✅ <result> 태그 발견")
+                result_content = result_match.group(1).strip()
+                try:
+                    policy_data = json.loads(result_content)
+                    projects = policy_data.get("projects", [])
+                    print(f"✅ <result>에서 {len(projects)}개 프로젝트 파싱")
+                    policies.extend(extract_policies_from_projects(projects))
+                except json.JSONDecodeError as e:
+                    print(f"❌ <result> JSON 파싱 실패: {e}")
+        
+        # 방법 3: 직접 JSON 패턴 찾기 (다양한 패턴)
+        if not policies:
+            print("🔍 직접 JSON 패턴 검색...")
+            
+            # 더 많은 패턴들
+            patterns = [
+                r'\{\s*"projects"\s*:\s*\[.*?\]\s*\}',  # 표준 패턴
+                r'"projects"\s*:\s*\[.*?\]',  # projects 배열만
+                r'\{\s*"projects"\s*:\s*\[[^\}]*\]\s*\}',  # 중첩 방지
+            ]
+            
+            for i, pattern in enumerate(patterns, 1):
+                print(f"   패턴 {i} 시도: {pattern[:30]}...")
+                matches = re.findall(pattern, response_str, re.DOTALL)
                 
-                for project in projects[:5]:  # 상위 5개만
+                if matches:
+                    print(f"   ✅ {len(matches)}개 매치 발견")
+                    for match in matches:
+                        try:
+                            # projects 배열만 매치된 경우 JSON 객체로 감싸기
+                            if not match.strip().startswith('{'):
+                                match = '{"' + match + '}'
+                            
+                            policy_data = json.loads(match)
+                            projects = policy_data.get("projects", [])
+                            print(f"   ✅ {len(projects)}개 프로젝트 파싱")
+                            policies.extend(extract_policies_from_projects(projects))
+                            break
+                        except json.JSONDecodeError as e:
+                            print(f"   ❌ JSON 파싱 실패: {e}")
+                            continue
+                
+                if policies:
+                    break
+        
+        # 방법 4: 전체 응답을 JSON으로 파싱 시도
+        if not policies:
+            print("🔍 전체 응답 JSON 파싱 시도...")
+            try:
+                policy_data = json.loads(response_str)
+                if isinstance(policy_data, dict) and "projects" in policy_data:
+                    projects = policy_data["projects"]
+                    print(f"   ✅ 전체 JSON에서 {len(projects)}개 프로젝트 파싱")
+                    policies.extend(extract_policies_from_projects(projects))
+            except json.JSONDecodeError:
+                print("   ❌ 전체 JSON 파싱 실패")
+        
+        # 방법 5: 정규식으로 개별 프로젝트 추출 (최후의 수단)
+        if not policies:
+            print("🔍 개별 프로젝트 정규식 추출...")
+            
+            # projectName 패턴으로 개별 프로젝트 찾기
+            project_pattern = r'"projectName"\s*:\s*"([^"]+)".*?"organization"\s*:\s*"([^"]+)".*?"applicationPeriod"\s*:\s*"([^"]+)".*?"summary"\s*:\s*"([^"]+)".*?"detailsUrl"\s*:\s*"([^"]+)"'
+            
+            matches = re.findall(project_pattern, response_str, re.DOTALL)
+            if matches:
+                print(f"   ✅ 정규식으로 {len(matches)}개 프로젝트 추출")
+                for match in matches:
                     policy = {
-                        'name': project.get('projectName', 'N/A'),
-                        'organization': project.get('organization', 'N/A'),
-                        'period': project.get('applicationPeriod', 'N/A'),
-                        'summary': project.get('summary', 'N/A'),
-                        'url': project.get('detailsUrl', '')
+                        'name': match[0].strip(),
+                        'organization': match[1].strip(),
+                        'period': match[2].strip(),
+                        'summary': match[3].strip()[:200] + "..." if len(match[3]) > 200 else match[3].strip(),
+                        'url': match[4].strip()
                     }
                     policies.append(policy)
-                    
-            except json.JSONDecodeError as e:
-                print(f"<result> 태그 내 JSON 파싱 실패: {str(e)}")
         
-        # <result> 태그가 없는 경우 기존 방식으로 JSON 찾기
+        # 방법 6: 키워드 기반 더미 정책 생성 (최후의 최후)
         if not policies:
-            # JSON 부분 찾기 (기존 방식)
-            json_start = policy_response.find('{"projects":')
-            if json_start == -1:
-                json_start = policy_response.find('{{')
-            
-            if json_start != -1:
-                # JSON 끝 찾기
-                brace_count = 0
-                json_end = json_start
-                for i, char in enumerate(policy_response[json_start:], json_start):
-                    if char == '{':
-                        brace_count += 1
-                    elif char == '}':
-                        brace_count -= 1
-                        if brace_count == 0:
-                            json_end = i + 1
-                            break
-                
-                if json_end > json_start:
-                    json_str = policy_response[json_start:json_end]
-                    # 이중 중괄호 처리
-                    json_str = json_str.replace('{{', '{').replace('}}', '}')
-                    
-                    try:
-                        policy_data = json.loads(json_str)
-                        projects = policy_data.get("projects", [])
-                        
-                        for project in projects[:5]:  # 상위 5개만
-                            policy = {
-                                'name': project.get('projectName', 'N/A'),
-                                'organization': project.get('organization', 'N/A'),
-                                'period': project.get('applicationPeriod', 'N/A'),
-                                'summary': project.get('summary', 'N/A'),
-                                'url': project.get('detailsUrl', '')
-                            }
-                            policies.append(policy)
-                            
-                    except json.JSONDecodeError as e:
-                        print(f"기존 방식 JSON 파싱 실패: {str(e)}")
+            print("🔍 키워드 기반 정책 감지...")
+            if 'projectName' in response_str or '정책' in response_str or '지원' in response_str:
+                print("✅ 정책 관련 키워드 발견 - 더미 정책 생성")
+                policies.append({
+                    'name': '정책 파싱 오류 - 원본 데이터 확인 필요',
+                    'organization': '시스템',
+                    'period': '확인 필요',
+                    'summary': f'정책 데이터가 감지되었으나 파싱에 실패했습니다. 디버그 파일을 확인하세요: {debug_filename}',
+                    'url': ''
+                })
+            else:
+                print("❌ 정책 관련 키워드를 찾을 수 없음")
     
     except Exception as e:
-        print(f"정책 파싱 오류: {str(e)}")
+        print(f"❌ 정책 파싱 전체 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # 오류 발생 시에도 더미 정책 생성
+        policies.append({
+            'name': f'정책 파싱 시스템 오류: {str(e)[:100]}',
+            'organization': '시스템',
+            'period': '확인 필요',
+            'summary': '정책 파싱 중 시스템 오류가 발생했습니다. 관리자에게 문의하세요.',
+            'url': ''
+        })
     
-    print(f"파싱된 정책 개수: {len(policies)}")  # 디버깅용
+    print(f"📊 최종 파싱된 정책 개수: {len(policies)}")
+    if policies:
+        print(f"📋 첫 번째 정책: {policies[0]['name'][:50]}...")
+    
+    return policies
+
+def extract_policies_from_projects(projects: List[Dict]) -> List[Dict[str, str]]:
+    """프로젝트 리스트에서 정책 정보 추출"""
+    policies = []
+    
+    for project in projects:  # 모든 정책 표시
+        policy = {
+            'name': project.get('projectName', 'N/A'),
+            'organization': project.get('organization', 'N/A'),
+            'period': project.get('applicationPeriod', 'N/A'),
+            'summary': project.get('summary', 'N/A'),
+            'url': project.get('detailsUrl', '')
+        }
+        policies.append(policy)
+    
     return policies
 
 def parse_policy_response(policy_response: str) -> str:
@@ -207,7 +316,7 @@ def parse_policy_response(policy_response: str) -> str:
                 if projects:
                     formatted_content = "### 관련 정부 지원 정책\n\n"
                     
-                    for i, project in enumerate(projects[:5], 1):
+                    for i, project in enumerate(projects, 1):
                         formatted_content += f"#### {i}. 지원정책\n\n"
                         formatted_content += f"- **지원정책 이름**: {project.get('projectName', 'N/A')}\n"
                         formatted_content += f"- **주관**: {project.get('organization', 'N/A')}\n"
@@ -250,7 +359,7 @@ def parse_policy_response(policy_response: str) -> str:
                     if projects:
                         formatted_content = "### 관련 정부 지원 정책\n\n"
                         
-                        for i, project in enumerate(projects[:5], 1):
+                        for i, project in enumerate(projects, 1):
                             formatted_content += f"#### {i}. 지원정책\n\n"
                             formatted_content += f"- **지원정책 이름**: {project.get('projectName', 'N/A')}\n"
                             formatted_content += f"- **주관**: {project.get('organization', 'N/A')}\n"
@@ -356,23 +465,137 @@ def create_korean_land_report(land_data: Dict[str, Any], knowledge_analysis: str
 def format_ai_analysis_for_html(analysis_text: str) -> str:
     """
     AI 분석 텍스트를 HTML 형식으로 변환합니다.
+    번호 목록과 불릿 목록을 적절한 HTML 태그로 변환합니다.
     """
-    # 줄바꿈을 <br>로 변환
-    formatted_text = analysis_text.replace('\n\n', '</p><p>').replace('\n', '<br>')
+    lines = analysis_text.split('\n')
+    formatted_lines = []
+    in_numbered_list = False
+    in_bullet_list = False
+    current_numbered_item = None
     
-    # 번호 목록 처리 (1., 2., 3. 등)
-    formatted_text = re.sub(r'^(\d+\.\s)', r'<strong>\1</strong>', formatted_text, flags=re.MULTILINE)
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        
+        # 빈 줄 처리
+        if not line:
+            # 불릿 리스트만 종료 (번호 리스트는 유지)
+            if in_bullet_list:
+                formatted_lines.append('</ul>')
+                in_bullet_list = False
+            formatted_lines.append('')
+            i += 1
+            continue
+        
+        # 번호 목록 처리 (1., 2., 3. 등)
+        numbered_match = re.match(r'^(\d+)\.\s*(.+)', line)
+        if numbered_match:
+            # 이전 불릿 리스트 종료
+            if in_bullet_list:
+                formatted_lines.append('</ul>')
+                in_bullet_list = False
+            
+            # 번호 리스트 시작
+            if not in_numbered_list:
+                formatted_lines.append('<ol>')
+                in_numbered_list = True
+            
+            number = numbered_match.group(1)
+            content = numbered_match.group(2)
+            current_numbered_item = number
+            
+            # 굵은 글씨 처리
+            content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', content)
+            
+            # 번호 항목 시작 (닫지 않음 - 하위 불릿이 있을 수 있음)
+            formatted_lines.append(f'<li><strong>{content}</strong>')
+            
+            # 다음 줄들을 확인하여 불릿 항목이 있는지 체크
+            j = i + 1
+            has_bullets = False
+            while j < len(lines) and lines[j].strip():
+                if re.match(r'^[-*]\s*(.+)', lines[j].strip()):
+                    has_bullets = True
+                    break
+                elif re.match(r'^(\d+)\.\s*(.+)', lines[j].strip()):
+                    break
+                j += 1
+            
+            if has_bullets:
+                formatted_lines.append('<ul>')
+                in_bullet_list = True
+            else:
+                formatted_lines.append('</li>')
+            
+            i += 1
+            continue
+        
+        # 불릿 목록 처리 (-, * 등)
+        bullet_match = re.match(r'^[-*]\s*(.+)', line)
+        if bullet_match:
+            content = bullet_match.group(1)
+            # 굵은 글씨 처리
+            content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', content)
+            
+            if in_bullet_list:
+                formatted_lines.append(f'<li>{content}</li>')
+            else:
+                # 독립적인 불릿 리스트
+                if in_numbered_list:
+                    formatted_lines.append('</ol>')
+                    in_numbered_list = False
+                formatted_lines.append('<ul>')
+                formatted_lines.append(f'<li>{content}</li>')
+                in_bullet_list = True
+            
+            i += 1
+            continue
+        
+        # 일반 텍스트 처리
+        # 불릿 리스트 종료 및 번호 항목 종료
+        if in_bullet_list:
+            formatted_lines.append('</ul>')
+            formatted_lines.append('</li>')  # 번호 항목 종료
+            in_bullet_list = False
+        
+        # 번호 리스트가 아닌 일반 텍스트면 번호 리스트도 종료
+        if in_numbered_list and not re.match(r'^(\d+)\.\s*(.+)', line):
+            # 다음 줄이 번호 항목인지 확인
+            next_is_numbered = False
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                if re.match(r'^(\d+)\.\s*(.+)', next_line):
+                    next_is_numbered = True
+            
+            if not next_is_numbered:
+                formatted_lines.append('</ol>')
+                in_numbered_list = False
+        
+        # 굵은 글씨 처리
+        line = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', line)
+        
+        # 제목 처리 (### 등)
+        if line.startswith('###'):
+            formatted_lines.append(f'<h4>{line[3:].strip()}</h4>')
+        elif line.startswith('##'):
+            formatted_lines.append(f'<h3>{line[2:].strip()}</h3>')
+        elif line.startswith('#'):
+            formatted_lines.append(f'<h2>{line[1:].strip()}</h2>')
+        else:
+            formatted_lines.append(f'<p>{line}</p>')
+        
+        i += 1
     
-    # 굵은 글씨 처리 (**텍스트**)
-    formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', formatted_text)
+    # 마지막에 열린 리스트 태그 닫기
+    if in_bullet_list:
+        formatted_lines.append('</ul>')
+        formatted_lines.append('</li>')  # 번호 항목도 종료
+    if in_numbered_list:
+        formatted_lines.append('</ol>')
     
-    # 단락으로 감싸기
-    if not formatted_text.startswith('<p>'):
-        formatted_text = f'<p>{formatted_text}</p>'
-    
-    return formatted_text
+    return '\n'.join(formatted_lines)
 
-def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, policy_analysis: str) -> Dict[str, Any]:
+def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, policy_analysis: str, analyze_data: Dict[str, Any] = None) -> Dict[str, Any]:
     """
     Jinja2 템플릿용 데이터 구조를 생성합니다.
     """
@@ -390,6 +613,11 @@ def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, pol
     land_data_with_formatted['공시지가_formatted'] = gongsi_formatted
     
     # 정책 데이터 파싱
+    print("🔍 정책 분석 응답 디버깅:")
+    print(f"   응답 타입: {type(policy_analysis)}")
+    print(f"   응답 길이: {len(str(policy_analysis))}")
+    print(f"   응답 미리보기: {str(policy_analysis)[:300]}...")
+    
     policies = parse_policy_response_for_template(policy_analysis)
     
     # AI 분석 결과 HTML 포맷팅
@@ -398,8 +626,17 @@ def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, pol
     # 분기 계산
     quarter = f"{current_date.year}년 {(current_date.month - 1) // 3 + 1}분기"
     
+    # analyze_data 처리 (기본값 설정)
+    if analyze_data is None:
+        analyze_data = {
+            "입지조건": 75,
+            "인프라": 70,
+            "안정성": 65
+        }
+    
     template_data = {
         'land_data': land_data_with_formatted,
+        'analyze_data': analyze_data,
         'ai_analysis': ai_analysis_html,
         'policies': policies,
         'analysis_date': current_date.strftime("%Y년 %m월 %d일 %H시 %M분"),
@@ -449,7 +686,7 @@ def orchestrate_land_analysis(land_data_str: str) -> str:
     except Exception as e:
         return f"토지 분석 오케스트레이션 오류: {str(e)}\n입력 데이터: {land_data_str}"
 
-def render_html_report(user_query: str, analysis_result: Dict[str, Any], template_path: str = "template.html") -> str:
+def render_html_report(user_query: str, analysis_result: Dict[str, Any], task_id: str, template_path: str = "template.html") -> str:
     """
     분석 결과를 사용하여 HTML 보고서를 렌더링합니다.
     
@@ -467,43 +704,53 @@ def render_html_report(user_query: str, analysis_result: Dict[str, Any], templat
         template = env.get_template(template_path)
         
         # 템플릿 렌더링
-        html_content = template.render(**analysis_result)
+        html_content = template.render(task_id=task_id, **analysis_result)
         
         return html_content
         
     except Exception as e:
         return f"<html><body><h1>HTML 보고서 생성 오류</h1><p>{str(e)}</p></body></html>"
 
-def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
+def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dict[str, Any]:
     """
     토지 분석 추론을 실행하고 구조화된 결과를 반환합니다.
     
     Args:
-        land_data_str: 토지 정보 문자열
+        land_data_input: 토지 정보 (문자열 또는 딕셔너리)
         
     Returns:
         분석 결과 딕셔너리 (템플릿 렌더링용)
     """
     try:
-        # 문자열 데이터를 딕셔너리로 파싱
-        land_data = {}
-        clean_data = land_data_str.replace("'", "").strip()
-        
-        items = clean_data.split(', ')
-        for item in items:
-            if ':' in item:
-                parts = item.split(':', 1)
-                if len(parts) == 2:
-                    key = parts[0].strip()
-                    value = parts[1].strip()
-                    
-                    if key == '공시지가':
-                        try:
-                            value = int(value)
-                        except ValueError:
-                            pass
-                    
-                    land_data[key] = value
+        # 입력 데이터 타입에 따라 처리
+        if isinstance(land_data_input, dict):
+            # JSON 딕셔너리인 경우
+            land_data = land_data_input.copy()
+            # 문자열 형태로도 변환 (기존 에이전트 호환성)
+            land_data_str = ", ".join([f"'{k}': '{v}'" for k, v in land_data.items()])
+        elif isinstance(land_data_input, str):
+            # 기존 문자열 형태인 경우
+            land_data_str = land_data_input
+            land_data = {}
+            clean_data = land_data_str.replace("'", "").strip()
+            
+            items = clean_data.split(', ')
+            for item in items:
+                if ':' in item:
+                    parts = item.split(':', 1)
+                    if len(parts) == 2:
+                        key = parts[0].strip()
+                        value = parts[1].strip()
+                        
+                        if key == '공시지가':
+                            try:
+                                value = int(value)
+                            except ValueError:
+                                pass
+                        
+                        land_data[key] = value
+        else:
+            raise ValueError("지원하지 않는 데이터 형식입니다.")
         
         if not land_data or '주소' not in land_data:
             raise ValueError("토지 데이터 파싱 오류: 주소 정보가 없습니다.")
@@ -516,8 +763,18 @@ def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
         
         print("📋 분석 결과 구조화 중...")
         
+        # analyze_data 처리
+        if analyze_data_input is None:
+            analyze_data = {
+                "입지조건": 75,
+                "인프라": 70,
+                "안정성": 65
+            }
+        else:
+            analyze_data = analyze_data_input
+        
         # 템플릿용 데이터 생성
-        template_data = create_template_data(land_data, knowledge_analysis, policy_analysis)
+        template_data = create_template_data(land_data, knowledge_analysis, policy_analysis, analyze_data)
         
         # 마크다운 보고서도 생성 (기존 호환성 유지)
         markdown_report = create_korean_land_report(land_data, knowledge_analysis, policy_analysis)
@@ -530,8 +787,14 @@ def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
     except Exception as e:
         # 오류 발생 시 기본 템플릿 데이터 반환
         current_date = datetime.now()
+        default_analyze_data = {
+            "입지조건": 0,
+            "인프라": 0,
+            "안정성": 0
+        }
         return {
             'land_data': {'주소': 'N/A', '공시지가_formatted': 'N/A'},
+            'analyze_data': default_analyze_data,
             'ai_analysis': f'<p>분석 중 오류가 발생했습니다: {str(e)}</p>',
             'policies': [],
             'analysis_date': current_date.strftime("%Y년 %m월 %d일 %H시 %M분"),
@@ -542,17 +805,36 @@ def run_land_analysis_inference(land_data_str: str) -> Dict[str, Any]:
 def main():
     """메인 오케스트레이터 실행"""
     
-    # 테스트 데이터
-    test_land_data = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
+    # 테스트 데이터 (JSON 형식)
+    test_land_data_json = {
+        '주소': '대구광역시 중구 동인동1가 2-1',
+        '지목': '대',
+        '용도지역': '중심상업지역',
+        '용도지구': '지정되지않음',
+        '토지이용상황': '업무용',
+        '지형고저': '평지',
+        '형상': '세로장방',
+        '도로접면': '광대소각',
+        '공시지가': 3735000
+    }
+    
+    test_analyze_data_json = {
+        '입지조건': 86,
+        '인프라': 78,
+        '안정성': 48
+    }
+    
+    # 기존 문자열 형식도 지원
+    test_land_data_str = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
     
     print("🚀 토지 분석 오케스트레이터 시작")
-    print(f"📍 분석 대상: {test_land_data}")
+    print(f"📍 분석 대상 (JSON): {test_land_data_json}")
     print("=" * 80)
     
     try:
-        # 1. AI 추론 실행 (에이전트 호출)
-        print("🤖 AI 추론 실행 중...")
-        analysis_result = run_land_analysis_inference(test_land_data)
+        # 1. AI 추론 실행 (JSON 데이터로 테스트)
+        print("🤖 AI 추론 실행 중 (JSON 입력)...")
+        analysis_result = run_land_analysis_inference(test_land_data_json, test_analyze_data_json)
         
         if 'error' in analysis_result:
             print(f"⚠️ 분석 중 오류 발생: {analysis_result['error']}")
@@ -570,7 +852,9 @@ def main():
         
         # 3. HTML 보고서 렌더링 (Jinja2 분리)
         print("🎨 HTML 보고서 렌더링 중...")
-        report_html = render_html_report(test_land_data, analysis_result, "template.html")
+        # JSON 데이터를 문자열로 변환하여 기존 템플릿과 호환
+        land_data_str_for_template = ", ".join([f"'{k}': '{v}'" for k, v in test_land_data_json.items()])
+        report_html = render_html_report(land_data_str_for_template, analysis_result, "template.html")
         
         # 4. HTML 보고서 파일 저장
         report_filename = f"토지분석보고서_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
