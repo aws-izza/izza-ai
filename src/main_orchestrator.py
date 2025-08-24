@@ -136,9 +136,9 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             with open(debug_filename, 'w', encoding='utf-8') as f:
                 f.write("=== POLICY AGENT RESPONSE DEBUG ===\n")
                 f.write(f"Timestamp: {datetime.now()}\n\n")
-                f.write("--- ORIGINAL RESPONSE ---\n")
+                f.write("---" + "ORIGINAL RESPONSE" + "---" + "\n")
                 f.write(str(policy_response))
-                f.write("\n\n--- CLEANED RESPONSE ---\n")
+                f.write("\n\n---" + "CLEANED RESPONSE" + "---" + "\n")
                 f.write(response_str)
             print(f"📁 디버그 파일 저장: {debug_filename}")
         except Exception as e:
@@ -152,7 +152,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             cleaned_response = response_str.replace('{{', '{').replace('}}', '}')
             
             # JSON 패턴 찾기
-            json_match = re.search(r'\{\s*"projects"\s*:\s*\[.*?\]\s*\}', cleaned_response, re.DOTALL)
+            json_match = re.search(r'{{s*"projects"s*:s*[[^]]*?]]s*}s*}', cleaned_response, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 try:
@@ -184,9 +184,9 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             
             # 더 많은 패턴들
             patterns = [
-                r'\{\s*"projects"\s*:\s*\[.*?\]\s*\}',  # 표준 패턴
-                r'"projects"\s*:\s*\[.*?\]',  # projects 배열만
-                r'\{\s*"projects"\s*:\s*\[[^\}]*\]\s*\}',  # 중첩 방지
+                r'{{s*"projects"s*:s*[[^]]*?]]s*}s*}',  # 표준 패턴
+                r'"projects"s*:s*[[^]]*?]]',  # projects 배열만
+                r'{{s*"projects"s*:s*[[^}]*]]s*}s*}',  # 중첩 방지
             ]
             
             for i, pattern in enumerate(patterns, 1):
@@ -230,7 +230,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             print("🔍 개별 프로젝트 정규식 추출...")
             
             # projectName 패턴으로 개별 프로젝트 찾기
-            project_pattern = r'"projectName"\s*:\s*"([^"]+)".*?"organization"\s*:\s*"([^"]+)".*?"applicationPeriod"\s*:\s*"([^"]+)".*?"summary"\s*:\s*"([^"]+)".*?"detailsUrl"\s*:\s*"([^"]+)"'
+            project_pattern = r'"projectName"s*:s*"([^"]*)".*?"organization"s*:s*"([^"]*)".*?"applicationPeriod"s*:s*"([^"]*)".*?"summary"s*:s*"([^"]*)".*?"detailsUrl"s*:s*"([^"]*)"'
             
             matches = re.findall(project_pattern, response_str, re.DOTALL)
             if matches:
@@ -651,8 +651,8 @@ def generate_html_report(template_data: Dict[str, Any]) -> str:
     """
     try:
         # Jinja2 환경 설정
-        env = Environment(loader=FileSystemLoader('.'))
-        template = env.get_template('template.html')
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template('web_report_template.html')
         
         # 템플릿 렌더링
         html_content = template.render(**template_data)
@@ -700,7 +700,7 @@ def render_html_report(user_query: str, analysis_result: Dict[str, Any], task_id
     """
     try:
         # Jinja2 환경 설정
-        env = Environment(loader=FileSystemLoader('.'))
+        env = Environment(loader=FileSystemLoader('templates'))
         template = env.get_template(template_path)
         
         # 템플릿 렌더링
@@ -854,7 +854,7 @@ def main():
         print("🎨 HTML 보고서 렌더링 중...")
         # JSON 데이터를 문자열로 변환하여 기존 템플릿과 호환
         land_data_str_for_template = ", ".join([f"'{k}': '{v}'" for k, v in test_land_data_json.items()])
-        report_html = render_html_report(land_data_str_for_template, analysis_result, "template.html")
+        report_html = render_html_report(land_data_str_for_template, analysis_result, "web_report_template.html")
         
         # 4. HTML 보고서 파일 저장
         report_filename = f"토지분석보고서_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"

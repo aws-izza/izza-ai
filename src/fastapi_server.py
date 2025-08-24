@@ -228,7 +228,7 @@ async def get_analysis_result_html(task_id: str):
     
     if task["status"] == "completed" and task["result"]:
         # HTML 보고서 렌더링
-        html_report = render_html_report(task["land_data_str"], task["result"], task_id)
+        html_report = render_html_report(task["land_data_str"], task["result"], task_id, template_path="web_report_template.html")
         return HTMLResponse(html_report)
     
     return HTMLResponse("<h1>결과를 찾을 수 없습니다.</h1>", status_code=404)
@@ -248,7 +248,7 @@ async def get_analysis_result_pdf(task_id: str):
         raise HTTPException(status_code=404, detail="분석 결과를 찾을 수 없습니다.")
 
     # HTML 보고서 렌더링
-    html_report = render_html_report(task["land_data_str"], task["result"], task_id)
+    html_report = render_html_report(task["land_data_str"], task["result"], task_id, template_path="pdf_template.html")
     
     # PDF 생성
     pdf_bytes = HTML(string=html_report).write_pdf()
