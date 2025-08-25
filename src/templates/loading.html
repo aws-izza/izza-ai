@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토지 분석 진행 중...</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 24px;
+            color: #333;
+        }
+
+        .report-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .report-header .title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .report-header .icon {
+            font-size: 24px;
+            color: #007bff;
+        }
+
+        .report-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .report-header .timestamp {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+
+        .report-body {
+            padding: 24px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 16px;
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-container {
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background-color: #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .progress-percent {
+            font-weight: 700;
+            color: #007bff;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        .step {
+            text-align: center;
+            padding: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+
+        .step.completed {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+
+        .step-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .step-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .land-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .land-info h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #495057;
+        }
+
+        .land-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <header class="report-header">
+            <div class="title-group">
+                <span class="icon">🔍</span>
+                <div>
+                    <h1>토지 분석 진행 중</h1>
+                    <p class="timestamp">AI가 토지 데이터를 분석하고 있습니다</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="report-body">
+            <div class="card">
+                <h2 class="card-title">분석 진행 상황</h2>
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progressMessage">분석을 시작합니다...</span>
+                            <span class="progress-percent" id="progressPercent">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="steps-container">
+                        <div class="step" id="step1">
+                            <div class="step-icon">📊</div>
+                            <div class="step-text">데이터 파싱</div>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-icon">🤖</div>
+                            <div class="step-text">AI 분석</div>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-icon">🏛️</div>
+                            <div class="step-text">정책 검색</div>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-icon">📋</div>
+                            <div class="step-text">보고서 생성</div>
+                        </div>
+                    </div>
+
+                    <div class="land-info">
+                        <h3>📍 분석 대상 토지</h3>
+                        {% if land_data %}
+                            {% if land_data.주소 %}
+                                <p><strong>주소:</strong> {{ land_data.주소 }}</p>
+                                <p><strong>지목:</strong> {{ land_data.지목 }} | <strong>용도지역:</strong> {{ land_data.용도지역 }}</p>
+                                <p><strong>Task ID:</strong> {{ task_id }}</p>
+                            {% else %}
+                                <p>{{ land_data }}</p>
+                                <p><strong>Task ID:</strong> {{ task_id }}</p>
+                            {% endif %}
+                        {% else %}
+                            <p>토지 정보를 불러오는 중...</p>
+                            <p><strong>Task ID:</strong> {{ task_id }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const taskId = "{{ task_id }}";
+        
+        // 상태 확인 함수
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/api/status/${taskId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                // 진행률 업데이트
+                updateProgress(data.progress, data.message);
+                
+                // 단계 표시 업데이트
+                updateSteps(data.progress);
+                
+                if (data.status === 'completed') {
+                    // 분석 완료 시 결과 페이지로 이동
+                    window.location.href = `/result/${taskId}`;
+                } else if (data.status === 'error') {
+                    showError(data.error || '알 수 없는 오류가 발생했습니다.');
+                } else {
+                    // 계속 상태 확인
+                    setTimeout(checkStatus, 2000);
+                }
+            } catch (error) {
+                console.error('상태 확인 오류:', error);
+                setTimeout(checkStatus, 5000); // 오류 시 5초 후 재시도
+            }
+        }
+        
+        // 진행률 업데이트
+        function updateProgress(progress, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressMessage = document.getElementById('progressMessage');
+            
+            progressFill.style.width = `${progress}%`;
+            progressPercent.textContent = `${progress}%`;
+            progressMessage.textContent = message;
+        }
+        
+        // 단계 표시 업데이트
+        function updateSteps(progress) {
+            const steps = document.querySelectorAll('.step');
+            
+            steps.forEach((step, index) => {
+                const threshold = (index + 1) * 25;
+                if (progress >= threshold) {
+                    step.classList.add('completed');
+                } else if (progress >= threshold - 25) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        // 오류 표시
+        function showError(error) {
+            const container = document.querySelector('.loading-content');
+            container.innerHTML = `
+                <div class="error-container">
+                    <div class="error-icon">❌</div>
+                    <h2>분석 중 오류가 발생했습니다</h2>
+                    <p>${error}</p>
+                    <button onclick="window.location.href='/'" class="retry-btn">
+                        다시 시도
+                    </button>
+                </div>
+            `;
+        }
+        
+        // 페이지 로드 시 상태 확인 시작
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

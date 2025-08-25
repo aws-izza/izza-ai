@@ -196,9 +196,6 @@ Thumbs.db
 
 # Application specific
 reports/
-*.html
-!browser_test.html
-!templates/*.html
 
 # AWS credentials (never commit these!)
 .aws/
