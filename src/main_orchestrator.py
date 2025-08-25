@@ -143,25 +143,45 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             print(f"📁 디버그 파일 저장: {debug_filename}")
         except Exception as e:
             print(f"❌ 디버그 파일 저장 실패: {str(e)}")
+
+        # 방법 0: 첫 '{'와 마지막 '}'으로 JSON 블록 찾기
+        print("🔍 중괄호로 JSON 블록 검색...")
+        json_start = response_str.find('{')
+        json_end = response_str.rfind('}') + 1
         
+        if json_start != -1 and json_end > json_start:
+            json_str = response_str[json_start:json_end]
+            try:
+                # 이중 중괄호가 있다면 단일로 변환
+                if '{{' in json_str:
+                    json_str = json_str.replace('{{', '{').replace('}}', '}')
+                
+                policy_data = json.loads(json_str)
+                projects = policy_data.get("projects", [])
+                print(f"✅ 중괄호 검색으로 {len(projects)}개 프로젝트 파싱")
+                policies.extend(extract_policies_from_projects(projects))
+            except json.JSONDecodeError as e:
+                print(f"❌ 중괄호 검색 JSON 파싱 실패: {e}")
+
         # 방법 1: 이중 중괄호 처리 (가장 일반적인 문제)
-        print("🔍 이중 중괄호 처리...")
-        if '{{' in response_str and '}}' in response_str:
-            print("✅ 이중 중괄호 발견 - 단일 중괄호로 변환")
-            # 이중 중괄호를 단일 중괄호로 변환
-            cleaned_response = response_str.replace('{{', '{').replace('}}', '}')
-            
-            # JSON 패턴 찾기
-            json_match = re.search(r'{{s*"projects"s*:s*[[^]]*?]]s*}s*}', cleaned_response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-                try:
-                    policy_data = json.loads(json_str)
-                    projects = policy_data.get("projects", [])
-                    print(f"✅ 이중 중괄호 처리로 {len(projects)}개 프로젝트 파싱")
-                    policies.extend(extract_policies_from_projects(projects))
-                except json.JSONDecodeError as e:
-                    print(f"❌ 이중 중괄호 처리 후 JSON 파싱 실패: {e}")
+        if not policies:
+            print("🔍 이중 중괄호 처리...")
+            if '{{' in response_str and '}}' in response_str:
+                print("✅ 이중 중괄호 발견 - 단일 중괄호로 변환")
+                # 이중 중괄호를 단일 중괄호로 변환
+                cleaned_response = response_str.replace('{{', '{').replace('}}', '}')
+                
+                # JSON 패턴 찾기
+                json_match = re.search(r'{"projects":\s*\[.*\]}', cleaned_response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    try:
+                        policy_data = json.loads(json_str)
+                        projects = policy_data.get("projects", [])
+                        print(f"✅ 이중 중괄호 처리로 {len(projects)}개 프로젝트 파싱")
+                        policies.extend(extract_policies_from_projects(projects))
+                    except json.JSONDecodeError as e:
+                        print(f"❌ 이중 중괄호 처리 후 JSON 파싱 실패: {e}")
         
         # 방법 2: <result> 태그 파싱
         if not policies:
@@ -182,36 +202,28 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
         if not policies:
             print("🔍 직접 JSON 패턴 검색...")
             
-            # 더 많은 패턴들
-            patterns = [
-                r'{{s*"projects"s*:s*[[^]]*?]]s*}s*}',  # 표준 패턴
-                r'"projects"s*:s*[[^]]*?]]',  # projects 배열만
-                r'{{s*"projects"s*:s*[[^}]*]]s*}s*}',  # 중첩 방지
-            ]
+            # JSON 객체 또는 배열을 찾는 더 일반적인 정규식
+            json_pattern = r'(\{s*"projects"s*:s*\[.*?\]s*\})|(\[s*\{.*?\}s*\])'
             
-            for i, pattern in enumerate(patterns, 1):
-                print(f"   패턴 {i} 시도: {pattern[:30]}...")
-                matches = re.findall(pattern, response_str, re.DOTALL)
-                
-                if matches:
-                    print(f"   ✅ {len(matches)}개 매치 발견")
-                    for match in matches:
-                        try:
-                            # projects 배열만 매치된 경우 JSON 객체로 감싸기
-                            if not match.strip().startswith('{'):
-                                match = '{"' + match + '}'
-                            
-                            policy_data = json.loads(match)
-                            projects = policy_data.get("projects", [])
-                            print(f"   ✅ {len(projects)}개 프로젝트 파싱")
-                            policies.extend(extract_policies_from_projects(projects))
-                            break
-                        except json.JSONDecodeError as e:
-                            print(f"   ❌ JSON 파싱 실패: {e}")
-                            continue
-                
-                if policies:
-                    break
+            matches = re.finditer(json_pattern, response_str, re.DOTALL)
+            
+            for match in matches:
+                json_str = match.group(0)
+                try:
+                    # 배열 형태일 경우 딕셔너리로 감싸기
+                    if json_str.startswith('['):
+                        policy_data = {"projects": json.loads(json_str)}
+                    else:
+                        policy_data = json.loads(json_str)
+                    
+                    projects = policy_data.get("projects", [])
+                    print(f"   ✅ 정규식으로 {len(projects)}개 프로젝트 파싱")
+                    policies.extend(extract_policies_from_projects(projects))
+                    if policies:
+                        break # 첫 번째 성공적인 파싱 후 중단
+                except json.JSONDecodeError as e:
+                    print(f"   ❌ JSON 파싱 실패: {e}")
+                    continue
         
         # 방법 4: 전체 응답을 JSON으로 파싱 시도
         if not policies:
@@ -230,7 +242,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             print("🔍 개별 프로젝트 정규식 추출...")
             
             # projectName 패턴으로 개별 프로젝트 찾기
-            project_pattern = r'"projectName"s*:s*"([^"]*)".*?"organization"s*:s*"([^"]*)".*?"applicationPeriod"s*:s*"([^"]*)".*?"summary"s*:s*"([^"]*)".*?"detailsUrl"s*:s*"([^"]*)"'
+            project_pattern = r'"projectName"s*:s*"(.*?)".*?"organization"s*:s*"(.*?)".*?"applicationPeriod"s*:s*"(.*?)".*?"summary"s*:s*"(.*?)".*?"detailsUrl"s*:s*"(.*?)"'
             
             matches = re.findall(project_pattern, response_str, re.DOTALL)
             if matches:
@@ -259,6 +271,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
                 })
             else:
                 print("❌ 정책 관련 키워드를 찾을 수 없음")
+
     
     except Exception as e:
         print(f"❌ 정책 파싱 전체 오류: {str(e)}")

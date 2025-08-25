@@ -217,16 +217,6 @@ config.json
 *.backup
 *.old
 
-# Compressed files
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
 # Docker (optional - uncomment if you don't want to track docker files)
 # docker-compose.override.yml
 # Dockerfile.local
@@ -240,11 +230,6 @@ local_*
 dev_*
 test_*
 
-# Machine learning models (if any large model files)
-*.pkl
-*.joblib
-*.model
-models/
 
 # Data files (if containing sensitive data)
 data/
@@ -259,11 +244,6 @@ datasets/
 *.key
 *.crt
 *.cert
-
-# Terraform (if used for infrastructure)
-*.tfstate
-*.tfstate.*
-.terraform/
 
 # Kubernetes (if used)
 *.kubeconfig
