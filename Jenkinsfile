@@ -121,13 +121,13 @@ spec:
                             '''
                             
                             sh """
-                                rm -rf environments/report/app.yaml
-                                cp ../k8s_deployment/app.yml environments/report/app.yaml
-                                sed -i 's|image: .*|image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}|' environments/report/app.yaml
+                                rm -rf environments/app/report/ai-report.yaml
+                                cp ../k8s_deployment/ai-report.yaml environments/app/report/ai-report.yaml
+                                sed -i 's|image: .*|image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}|' environments/app/report/ai-report.yaml
                             """
                             
                             sh """
-                                git add environments/report/app.yaml
+                                git add environments/app/report/ai-report.yaml
                                 git commit -m "Update: dev image tag to ${IMAGE_TAG}"
                                 git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/aws-izza/izza-cd.git main
                             """
