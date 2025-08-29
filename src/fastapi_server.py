@@ -214,7 +214,7 @@ async def get_analysis_result_json(task_id: str):
 
 @app.get("/result/{task_id}", response_class=HTMLResponse)
 async def get_analysis_result_html(task_id: str):
-    """분석 결과 HTML 페이지 - MSA 프론트엔드용"""
+    """분석 결과 HTML 페이지"""
     if task_id not in analysis_tasks:
         return HTMLResponse("<h1>작업을 찾을 수 없습니다.</h1>", status_code=404)
     
@@ -305,6 +305,11 @@ async def health_check():
         "version": "2.0.0",
         "active_tasks": len(analysis_tasks)
     }
+
+@app.get("/actuator/health")
+async def actuator_health_check():
+    """Actuator 헬스 체크"""
+    return {"status": "UP"}
 
 @app.get("/api/tasks")
 async def list_active_tasks():
