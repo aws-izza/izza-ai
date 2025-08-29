@@ -71,7 +71,8 @@ def main():
         host="0.0.0.0",
         port=8000,
         reload=True,
-        log_level="debug"
+        log_level="info",
+        access_log=False
     )
 
 if __name__ == "__main__":
