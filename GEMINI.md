@@ -56,3 +56,8 @@ docker run -p 8000:8000 izza/aireport
 *   **Coding Style:** The code follows the PEP 8 style guide.
 *   **Testing:** The project includes a `main` function in `main_orchestrator.py` that can be used for testing the analysis pipeline. There is also a browser-based test page at `/browser_test.html`.
 *   **API Documentation:** The API is documented using OpenAPI (Swagger). The documentation is available at `http://localhost:8000/docs`.
+
+# Key Configurations
+
+*   **Logging:** The application is configured to output logs exclusively in JSON format. The Uvicorn access logs are disabled to ensure log consistency.
+*   **CORS:** The API has Cross-Origin Resource Sharing (CORS) enabled to allow requests from any domain. This is configured in `fastapi_server.py`.

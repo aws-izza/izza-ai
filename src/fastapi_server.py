@@ -18,6 +18,7 @@ from typing import Dict, Any, Optional
 import os
 import json
 from weasyprint import HTML
+from fastapi.middleware.cors import CORSMiddleware
 
 from main_orchestrator import run_land_analysis_inference, render_html_report
 from logging_config import setup_logging
@@ -59,6 +60,14 @@ app = FastAPI(
     title="토지 분석 AI 서비스 API",
     version="2.0.0",
     description="MSA 기반 토지 분석 서비스 - JSON API"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Middleware for Logging ---
