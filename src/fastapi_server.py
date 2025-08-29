@@ -39,12 +39,12 @@ class LandData(BaseModel):
     지형고저: str = Field(..., description="지형고저")
     형상: str = Field(..., description="토지 형상")
     도로접면: str = Field(..., description="도로접면")
-    공시지가: int = Field(..., description="공시지가")
+    공시지가: float = Field(..., description="공시지가")
 
 class AnalyzeData(BaseModel):
-    입지조건: int = Field(..., description="입지조건 점수")
-    인프라: int = Field(..., description="인프라 점수")
-    안정성: int = Field(..., description="안정성 점수")
+    입지조건: float = Field(..., description="입지조건 점수")
+    인프라: float = Field(..., description="인프라 점수")
+    안정성: float = Field(..., description="안정성 점수")
 
 class AnalysisRequest(BaseModel):
     analyze_data: AnalyzeData = Field(..., description="분석 점수 데이터")
