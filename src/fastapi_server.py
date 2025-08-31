@@ -161,7 +161,7 @@ async def loading_page(request: Request, task_id: str):
         <body>
             <h1>❌ 분석 작업을 찾을 수 없습니다</h1>
             <p>Task ID: {task_id}</p>
-            <p><a href="/demo/start">새 분석 시작</a></p>
+            <p><a href="/browser_test.html">새 분석 시작</a></p>
         </body>
         </html>
         ''', status_code=404)
@@ -353,69 +353,6 @@ async def browser_test_page():
     except FileNotFoundError:
         return HTMLResponse("<h1>브라우저 테스트 페이지를 찾을 수 없습니다.</h1>", status_code=404)
 
-@app.get("/demo/start")
-async def start_demo_analysis(background_tasks: BackgroundTasks):
-    """데모 분석 시작 - 브라우저 테스트용"""
-    demo_land_data = {
-        "주소": "대구광역시 중구 동인동1가 2-1",
-        "지목": "대",
-        "용도지역": "중심상업지역",
-        "용도지구": "지정되지않음",
-        "토지이용상황": "업무용",
-        "지형고저": "평지",
-        "형상": "세로장방",
-        "도로접면": "광대소각",
-        "공시지가": 3735000
-    }
-    
-    demo_analyze_data = {
-        "입지조건": 86,
-        "인프라": 78,
-        "안정성": 48
-    }
-    
-    try:
-        # 고유 작업 ID 생성
-        task_id = str(uuid.uuid4())
-        
-        # JSON 데이터를 문자열로 변환
-        land_data_str = ", ".join([f"'{k}': '{v}'" for k, v in demo_land_data.items()])
-        
-        # 작업 상태 초기화
-        analysis_tasks[task_id] = {
-            "status": "processing",
-            "progress": 0,
-            "message": "데모 분석을 시작합니다...",
-            "land_data": demo_land_data,
-            "analyze_data": demo_analyze_data,
-            "land_data_str": land_data_str,
-            "created_at": datetime.now(),
-            "result": None,
-            "error": None
-        }
-        
-        # 백그라운드에서 분석 실행
-        background_tasks.add_task(run_analysis_task, task_id, land_data_str, demo_analyze_data)
-        
-        return {
-            "task_id": task_id,
-            "status": "processing",
-            "message": "데모 분석이 시작되었습니다.",
-            "loading_url": f"/loading/{task_id}",
-            "status_url": f"/api/status/{task_id}",
-            "result_url": f"/result/{task_id}",
-            "debug_info": {
-                "total_tasks": len(analysis_tasks),
-                "demo_land_data": demo_land_data,
-                "demo_analyze_data": demo_analyze_data
-            }
-        }
-    except Exception as e:
-        return {
-            "error": f"데모 시작 오류: {str(e)}",
-            "task_id": None
-        }
-
 @app.get("/")
 async def api_info():
     """API 정보 및 사용법"""
@@ -424,7 +361,6 @@ async def api_info():
         "version": "2.0.0",
         "description": "MSA 기반 토지 분석 서비스",
         "browser_test": "/browser_test.html (브라우저 테스트 페이지)",
-        "demo_start": "/demo/start (데모 분석 시작)",
         "endpoints": {
             "POST /api/analyze": "토지 분석 시작",
             "GET /api/status/{task_id}": "분석 상태 확인",
@@ -432,8 +368,7 @@ async def api_info():
             "GET /result/{task_id}": "분석 결과 HTML",
             "GET /loading/{task_id}": "로딩 페이지",
             "GET /api/tasks": "활성 작업 목록",
-            "GET /health": "헬스 체크",
-            "GET /demo/start": "데모 분석 시작"
+            "GET /health": "헬스 체크"
         },
         "sample_request": {
             "analyze_data": {

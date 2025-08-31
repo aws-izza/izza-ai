@@ -12,20 +12,28 @@ import re
 load_dotenv()
 
 @tool
-def land_knowledge_analysis(land_data: str) -> str:
+def land_knowledge_analysis(land_data: str, analyze_data: Dict[str, Any]) -> str:
     """
-    토지 데이터를 분석하여 전문적인 지식 기반 분석을 수행합니다.
+    토지 데이터와 분석 점수를 기반으로 전문적인 지식 기반 분석을 수행합니다.
     
     Args:
         land_data: 토지 정보 데이터 (주소, 지목, 용도지역 등)
+        analyze_data: 분석 점수 데이터 (입지조건, 인프라, 안정성)
         
     Returns:
         토지에 대한 전문적인 분석 결과
     """
     query = f"""
-    다음 토지 정보에 대해 상세한 분석을 해주세요:
+    다음 토지 정보와 점수를 바탕으로 상세한 분석을 해주세요:
+
+    토지 정보:
     {land_data}
-    
+
+    분석 점수:
+    - 입지조건: {round(analyze_data.get('입지조건', 0), 2)}
+    - 인프라: {round(analyze_data.get('인프라', 0), 2)}
+    - 안정성: {round(analyze_data.get('안정성', 0), 2)}
+
     다음 항목들을 포함하여 분석해주세요:
     1. 지목과 용도지역의 특성 및 의미
     2. 토지 이용 현황 분석
@@ -34,6 +42,7 @@ def land_knowledge_analysis(land_data: str) -> str:
     5. 공시지가 수준 분석
     6. 개발 가능성 및 제약사항
     7. 투자 가치 평가
+    8. 위 분석 점수들을 고려한 종합적인 투자 의견 및 위험 요소 분석
     """
     
     return knowledge_agent(query)
@@ -101,7 +110,6 @@ def policy_search_analysis(land_data: str) -> str:
     특히 다음과 같은 정책들을 우선적으로 검색해주세요:
     - {region} 지역의 부동산 개발 지원 정책
     - 상업지역 관련 창업 지원 정책
-    - 토지 활용 관련 금융 지원 정책
     - 지역 개발 관련 기술 지원 정책
     """
     
@@ -203,7 +211,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
             print("🔍 직접 JSON 패턴 검색...")
             
             # JSON 객체 또는 배열을 찾는 더 일반적인 정규식
-            json_pattern = r'(\{s*"projects"s*:s*\[.*?\]s*\})|(\[s*\{.*?\}s*\])'
+            json_pattern = r'(\{s*"projects"s*:\s*\[.*?\]s*\})|(\[s*\{.*?\}s*\])'
             
             matches = re.finditer(json_pattern, response_str, re.DOTALL)
             
@@ -768,14 +776,6 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
         if not land_data or '주소' not in land_data:
             raise ValueError("토지 데이터 파싱 오류: 주소 정보가 없습니다.")
         
-        print("🔍 토지 지식 분석 시작...")
-        knowledge_analysis = land_knowledge_analysis(land_data_str)
-        
-        print("🏛️ 정책 분석 시작...")
-        policy_analysis = policy_search_analysis(land_data_str)
-        
-        print("📋 분석 결과 구조화 중...")
-        
         # analyze_data 처리
         if analyze_data_input is None:
             analyze_data = {
@@ -785,6 +785,14 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
             }
         else:
             analyze_data = analyze_data_input
+
+        print("🔍 토지 지식 분석 시작...")
+        knowledge_analysis = land_knowledge_analysis(land_data_str, analyze_data)
+        
+        print("🏛️ 정책 분석 시작...")
+        policy_analysis = policy_search_analysis(land_data_str)
+        
+        print("📋 분석 결과 구조화 중...")
         
         # 템플릿용 데이터 생성
         template_data = create_template_data(land_data, knowledge_analysis, policy_analysis, analyze_data)
@@ -898,13 +906,18 @@ def main():
 def test_individual_agents():
     """개별 에이전트 테스트"""
     test_data = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
+    test_analyze_data = {
+        '입지조건': 80,
+        '인프라': 75,
+        '안정성': 90
+    }
     
     print("🧪 개별 에이전트 테스트")
     print("=" * 50)
     
     try:
         print("1️⃣ 지식 에이전트 테스트...")
-        knowledge_result = land_knowledge_analysis(test_data)
+        knowledge_result = land_knowledge_analysis(test_data, test_analyze_data)
         print("✅ 지식 에이전트 성공")
         print(knowledge_result[:200] + "..." if len(knowledge_result) > 200 else knowledge_result)
         
@@ -917,6 +930,7 @@ def test_individual_agents():
         print(f"❌ 개별 테스트 오류: {str(e)}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     import sys
