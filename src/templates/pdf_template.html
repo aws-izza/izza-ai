@@ -82,11 +82,11 @@
         <section>
             <div class="card">
                 <h2 class="card-title">종합 평가 점수</h2>
-                {% set overall = ((analyze_data["입지조건"] + analyze_data["인프라"] + analyze_data["안정성"]) / 3) | round | int %}
+                {% set overall = ((analyze_data["입지조건"] + analyze_data["인프라"] + analyze_data["안정성"]) / 3) | round(2) %}
                 <p><strong>종합 점수:</strong> {{ overall }} / 100</p>
-                <p><strong>입지조건:</strong> {{ analyze_data["입지조건"] }}</p>
-                <p><strong>인프라:</strong> {{ analyze_data["인프라"] }}</p>
-                <p><strong>안정성:</strong> {{ analyze_data["안정성"] }}</p>
+                <p><strong>입지조건:</strong> {{ analyze_data["입지조건"] | round(2) }}</p>
+                <p><strong>인프라:</strong> {{ analyze_data["인프라"] | round(2) }}</p>
+                <p><strong>안정성:</strong> {{ analyze_data["안정성"] | round(2) }}</p>
             </div>
 
             <div class="card">

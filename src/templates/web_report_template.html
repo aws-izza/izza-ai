@@ -335,7 +335,7 @@
                             <div class="field-score-header">
                                 <span class="field-score-title">{{ field }}</span>
                                 <div class="score-badge">
-                                    <span class="score-value">{{ score }}</span>
+                                    <span class="score-value">{{ score | round(2) }}</span>
                                     <span class="badge {{ badge_color }}">{{ badge_text }}</span>
                                 </div>
                             </div>
