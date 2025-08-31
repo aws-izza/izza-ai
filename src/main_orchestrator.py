@@ -757,7 +757,7 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
                         
                         if key == '공시지가':
                             try:
-                                value = int(value)
+                                value = float(value)
                             except ValueError:
                                 pass
                         
