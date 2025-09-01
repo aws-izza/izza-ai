@@ -82,11 +82,11 @@
         <section>
             <div class="card">
                 <h2 class="card-title">종합 평가 점수</h2>
-                {% set overall = analyze_data["totalScore"] %}
+                {% set overall = analyze_data["totalScore"] | int %}
                 <p><strong>종합 점수:</strong> {{ overall }} / 100</p>
-                <p><strong>입지조건:</strong> {{ analyze_data["입지조건"] }}</p>
-                <p><strong>인프라:</strong> {{ analyze_data["인프라"] }}</p>
-                <p><strong>안정성:</strong> {{ analyze_data["안정성"] }}</p>
+                <p><strong>입지조건:</strong> {{ analyze_data["입지조건"] | int }}</p>
+                <p><strong>인프라:</strong> {{ analyze_data["인프라"] | int }}</p>
+                <p><strong>안정성:</strong> {{ analyze_data["안정성"] | int }}</p>
             </div>
 
             <div class="card">
@@ -100,7 +100,7 @@
                     <tr><td>지형고저</td><td>{{ land_data.지형고저 }}</td></tr>
                     <tr><td>형상</td><td>{{ land_data.형상 }}</td></tr>
                     <tr><td>도로접면</td><td>{{ land_data.도로접면 }}</td></tr>
-                    <tr><td>공시지가</td><td>{{ "{:,}".format(land_data.공시지가) }} 원</td></tr>
+                    <tr><td>공시지가</td><td>{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td></tr>
                 </table>
             </div>
         </section>

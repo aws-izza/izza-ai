@@ -335,7 +335,7 @@
                             <div class="field-score-header">
                                 <span class="field-score-title">{{ field }}</span>
                                 <div class="score-badge">
-                                    <span class="score-value">{{ score }}</span>
+                                    <span class="score-value">{{ score | int }}</span>
                                     <span class="badge {{ badge_color }}">{{ badge_text }}</span>
                                 </div>
                             </div>
@@ -384,7 +384,7 @@
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; font-weight: 500;">공시지가</td>
-                            <td style="padding: 8px 0;">{{ "{:,}".format(land_data.공시지가) }} 원</td>
+                            <td style="padding: 8px 0;">{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td>
                         </tr>
                     </table>
                 </div>
