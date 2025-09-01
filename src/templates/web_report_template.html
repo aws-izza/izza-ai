@@ -290,7 +290,7 @@
             <section class="left-column">
                 <div class="card overall-score-card">
                     <h2 class="card-title">종합 평가 점수</h2>
-                    {% set overall = ((analyze_data["입지조건"] + analyze_data["인프라"] + analyze_data["안정성"]) / 3) | round | int %}
+                    {% set overall = analyze_data["totalScore"] | round | int %}
                     {% if overall < 50 %}
                         {% set overall_badge = "미흡" %}
                         {% set overall_color = "badge-poor" %}
@@ -335,7 +335,7 @@
                             <div class="field-score-header">
                                 <span class="field-score-title">{{ field }}</span>
                                 <div class="score-badge">
-                                    <span class="score-value">{{ score | round(2) }}</span>
+                                    <span class="score-value">{{ score }}</span>
                                     <span class="badge {{ badge_color }}">{{ badge_text }}</span>
                                 </div>
                             </div>

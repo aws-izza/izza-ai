@@ -30,6 +30,7 @@ def land_knowledge_analysis(land_data: str, analyze_data: Dict[str, Any]) -> str
     {land_data}
 
     분석 점수:
+    - 종합 점수: {round(analyze_data.get('totalScore', 0), 2)}
     - 입지조건: {round(analyze_data.get('입지조건', 0), 2)}
     - 인프라: {round(analyze_data.get('인프라', 0), 2)}
     - 안정성: {round(analyze_data.get('안정성', 0), 2)}
@@ -650,6 +651,7 @@ def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, pol
     # analyze_data 처리 (기본값 설정)
     if analyze_data is None:
         analyze_data = {
+            "totalScore": 70,
             "입지조건": 75,
             "인프라": 70,
             "안정성": 65
@@ -779,6 +781,7 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
         # analyze_data 처리
         if analyze_data_input is None:
             analyze_data = {
+                "totalScore": 70,
                 "입지조건": 75,
                 "인프라": 70,
                 "안정성": 65
@@ -809,6 +812,7 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
         # 오류 발생 시 기본 템플릿 데이터 반환
         current_date = datetime.now()
         default_analyze_data = {
+            "totalScore": 0,
             "입지조건": 0,
             "인프라": 0,
             "안정성": 0
@@ -840,6 +844,7 @@ def main():
     }
     
     test_analyze_data_json = {
+        'totalScore': 71,
         '입지조건': 86,
         '인프라': 78,
         '안정성': 48
@@ -907,6 +912,7 @@ def test_individual_agents():
     """개별 에이전트 테스트"""
     test_data = "'주소': '대구광역시 중구 동인동1가 2-1', '지목': '대', '용도지역': '중심상업지역', '용도지구': '지정되지않음', '토지이용상황': '업무용', '지형고저': '평지', '형상': '세로장방', '도로접면': '광대소각', '공시지가': 3735000"
     test_analyze_data = {
+        'totalScore': 82,
         '입지조건': 80,
         '인프라': 75,
         '안정성': 90
