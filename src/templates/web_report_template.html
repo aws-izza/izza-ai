@@ -293,7 +293,7 @@
             <section class="left-column">
                 <div class="card overall-score-card">
                     <h2 class="card-title">종합 평가 점수</h2>
-                    {% set overall = analyze_data["totalScore"] | round | int %}
+                    {% set overall = analyze_data["totalScore"] | int %}
                     {% if overall < 50 %}
                         {% set overall_badge = "미흡" %}
                         {% set overall_color = "badge-poor" %}
@@ -396,7 +396,7 @@
                         </tr>
                         <tr>
                             <td style="padding: 8px 0; font-weight: 500;">공시지가</td>
-                            <td style="padding: 8px 0;">{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td>
+                            <td style="padding: 8px 0;">{{ "{:,}".format((land_data['공시지가'] | int)) }} 원</td>
                         </tr>
                     </table>
                 </div>

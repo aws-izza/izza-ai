@@ -147,7 +147,7 @@
                 <tr><th>지형고저</th><td>{{ land_data.지형고저 }}</td></tr>
                 <tr><th>형상</th><td>{{ land_data.형상 }}</td></tr>
                 <tr><th>도로접면</th><td>{{ land_data.도로접면 }}</td></tr>
-                <tr><th>공시지가</th><td>{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td></tr>
+                <tr><th>공시지가</th><td>{{ "{:,}".format((land_data['공시지가'] | int)) }} 원</td></tr>
             </table>
         </section>
 

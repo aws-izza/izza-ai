@@ -39,7 +39,7 @@ class LandData(BaseModel):
     지형고저: str = Field(..., description="지형고저")
     형상: str = Field(..., description="토지 형상")
     도로접면: str = Field(..., description="도로접면")
-    공시지가: float = Field(..., description="공시지가")
+    공시지가: int = Field(..., description="공시지가")
 
 class AnalyzeData(BaseModel):
     totalScore: Optional[int] = Field(None, description="종합 점수")
