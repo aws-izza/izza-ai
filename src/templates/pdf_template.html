@@ -4,129 +4,173 @@
     <meta charset="UTF-8">
     <title>{{ land_data.주소 }} AI 분석 리포트</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            margin: 40px;
-            font-size: 12px;
-        }
-        .report-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0;
+            margin: 30px;
+            font-size: 10pt;
             color: #333;
         }
-        .report-header .timestamp {
-            font-size: 14px;
-            color: #888;
-            margin: 4px 0 24px 0;
-        }
-        .card {
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
-            break-inside: avoid;
-        }
-        .card-title {
-            font-size: 18px;
+        h1 {
+            font-size: 22pt;
             font-weight: 700;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #111;
+        }
+        .timestamp {
+            font-size: 10pt;
+            color: #666;
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        h2 {
+            font-size: 15pt;
+            font-weight: 700;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #222;
+            padding-bottom: 8px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 25px;
         }
-        td {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 10pt;
         }
-        td:first-child {
-            font-weight: 500;
-            width: 30%;
+        th {
+            background-color: #f9f9f9;
+            font-weight: 700;
+            width: 25%;
         }
-        .ai-analysis-card .content {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #495057;
+        .content {
+            line-height: 1.7;
+            font-size: 11pt;
+            text-align: justify;
         }
         .policy-item {
-            border-top: 1px solid #f1f1f1;
-            padding-top: 16px;
-            margin-top: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
-        .policy-item:first-child {
-            border-top: none;
-            padding-top: 0;
-            margin-top: 0;
+        .policy-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         .policy-name {
-            font-size: 15px;
-            font-weight: 500;
+            font-weight: 700;
+            font-size: 11pt;
+            margin-bottom: 5px;
         }
         .policy-summary {
-            font-size: 14px;
-            color: #6c757d;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            font-size: 10pt;
+            color: #555;
+        }
+        .policy-details {
+            font-size: 9pt;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <header class="report-header">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <svg width="72" height="32" viewBox="0 0 72 32" fill="none" xmlns="http://www.w3.org/2000/svg" class=""><path d="M66.0889 27.9322C63.8393 27.9322 61.4918 28.0626 59.3073 27.9648C57.1228 27.867 55.1666 27.6387 53.7646 26.8888C52.33 26.139 51.4497 24.9326 51.4497 22.8785C51.4497 20.5637 52.493 19.0313 54.2211 17.9879C55.9491 16.9772 58.3944 16.4881 61.1657 16.2599C59.829 15.184 57.2532 15.1514 54.1232 15.8361C53.569 15.9665 53.3081 15.8035 53.2755 15.347L53.0799 11.1737C53.0473 10.5542 53.2429 10.3586 53.7646 10.2608C55.623 9.96732 57.7423 9.70649 59.7311 9.73909C61.72 9.8369 63.6436 10.2282 65.0456 11.3041C66.4476 12.38 67.3605 14.108 67.4583 16.8468L67.7192 26.2042C67.7518 27.5083 67.3605 27.9322 66.0889 27.9322ZM57.8075 22.5525C57.8075 23.2046 58.2966 23.6284 59.0465 23.7915C59.7964 24.0197 60.7745 23.9871 61.72 23.8893L61.557 20.6615C59.0791 20.9223 57.8075 21.3462 57.8075 22.5525Z" fill="#5E9F00"></path><path d="M49.535 6.44531L40.7971 21.378H48.2961C49.1764 21.378 49.6002 21.6714 49.6002 22.5843V26.7251C49.6002 27.638 49.1764 27.964 48.2961 27.964H32.1896C30.3964 27.964 30.2008 26.8229 30.9507 25.5187L39.6886 10.5534H31.5702C30.6573 10.5534 30.2334 10.26 30.2334 9.34707V5.20635C30.2334 4.29344 30.6573 4 31.5702 4H48.2961C50.0241 4 50.3175 5.14114 49.535 6.44531Z" fill="#5E9F00"></path><path d="M27.3383 27.9646H14.8835C13.0903 27.9646 12.8947 26.7908 13.6446 25.5193L18.959 15.8685H14.1336C13.2207 15.8685 12.7969 15.575 12.7969 14.6621V10.9778C12.7969 10.0975 13.2207 9.77148 14.1336 9.77148H27.0449C28.7729 9.77148 29.0663 10.9126 28.2838 12.2168L22.8715 21.9002H27.3383C28.2512 21.9002 28.6751 22.1936 28.6751 23.1066V26.7256C28.6751 27.6385 28.2512 27.9646 27.3383 27.9646Z" fill="#5E9F00"></path><path d="M4.32604 26.4968L4 5.46719C4 4.32604 4.32604 4 5.23896 4H9.93395C10.8795 4 11.1403 4.32604 11.1729 5.46719L11.4989 26.4968C11.5315 27.638 11.2055 27.964 10.26 27.964H5.565C4.65208 27.964 4.35865 27.638 4.32604 26.4968Z" fill="#5E9F00"></path></svg>
+    </div>
+    <header>
         <h1>{{ land_data.주소 }} AI 분석 리포트</h1>
         <p class="timestamp">분석일시: {{ analysis_date }} ({{ analysis_quarter }} 기준)</p>
     </header>
 
     <main>
         <section>
-            <div class="card">
-                <h2 class="card-title">종합 평가 점수</h2>
-                {% set overall = analyze_data["totalScore"] | int %}
-                <p><strong>종합 점수:</strong> {{ overall }} / 100</p>
-                <p><strong>입지조건:</strong> {{ analyze_data["입지조건"] | int }}</p>
-                <p><strong>인프라:</strong> {{ analyze_data["인프라"] | int }}</p>
-                <p><strong>안정성:</strong> {{ analyze_data["안정성"] | int }}</p>
-            </div>
+            <h2>종합 평가</h2>
+            <table>
+                <tr>
+                    <th>종합 점수</th>
+                    <td>
+                        {% if "totalScore" in analyze_data and analyze_data["totalScore"] is not none %}
+                            <strong>{{ analyze_data["totalScore"] | int }} / 100</strong>
+                        {% else %}
+                            분석대상으로 설정되지 않았습니다.
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>입지조건</th>
+                    <td>
+                        {% if "입지조건" in analyze_data and analyze_data["입지조건"] is not none %}
+                            {{ analyze_data["입지조건"] | int }}
+                        {% else %}
+                            분석대상으로 설정되지 않았습니다.
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>인프라</th>
+                    <td>
+                        {% if "인프라" in analyze_data and analyze_data["인프라"] is not none %}
+                            {{ analyze_data["인프라"] | int }}
+                        {% else %}
+                            분석대상으로 설정되지 않았습니다.
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>안정성</th>
+                    <td>
+                        {% if "안정성" in analyze_data and analyze_data["안정성"] is not none %}
+                            {{ analyze_data["안정성"] | int }}
+                        {% else %}
+                            분석대상으로 설정되지 않았습니다.
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </section>
 
-            <div class="card">
-                <h2 class="card-title">토지 기본 정보</h2>
-                <table>
-                    <tr><td>주소</td><td>{{ land_data.주소 }}</td></tr>
-                    <tr><td>지목</td><td>{{ land_data.지목 }}</td></tr>
-                    <tr><td>용도지역</td><td>{{ land_data.용도지역 }}</td></tr>
-                    <tr><td>용도지구</td><td>{{ land_data.용도지구 }}</td></tr>
-                    <tr><td>토지이용상황</td><td>{{ land_data.토지이용상황 }}</td></tr>
-                    <tr><td>지형고저</td><td>{{ land_data.지형고저 }}</td></tr>
-                    <tr><td>형상</td><td>{{ land_data.형상 }}</td></tr>
-                    <tr><td>도로접면</td><td>{{ land_data.도로접면 }}</td></tr>
-                    <tr><td>공시지가</td><td>{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td></tr>
-                </table>
+        <section>
+            <h2>토지 기본 정보</h2>
+            <table>
+                <tr><th>주소</th><td>{{ land_data.주소 }}</td></tr>
+                <tr><th>지목</th><td>{{ land_data.지목 }}</td></tr>
+                <tr><th>용도지역</th><td>{{ land_data.용도지역 }}</td></tr>
+                <tr><th>용도지구</th><td>{{ land_data.용도지구 }}</td></tr>
+                <tr><th>토지이용상황</th><td>{{ land_data.토지이용상황 }}</td></tr>
+                <tr><th>지형고저</th><td>{{ land_data.지형고저 }}</td></tr>
+                <tr><th>형상</th><td>{{ land_data.형상 }}</td></tr>
+                <tr><th>도로접면</th><td>{{ land_data.도로접면 }}</td></tr>
+                <tr><th>공시지가</th><td>{{ "{:,}".format((land_data.공시지가 | int)) }} 원</td></tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>AI 분석 결과</h2>
+            <div class="content">
+                {{ ai_analysis | safe }}
             </div>
         </section>
 
         <section>
-            <div class="card ai-analysis-card">
-                <h2 class="card-title">AI 분석 결과</h2>
-                <div class="content">
-                    {{ ai_analysis | safe }}
+            <h2>관련 정책 및 규제사항</h2>
+            {% if policies %}
+                {% for policy in policies %}
+                <div class="policy-item">
+                    <p class="policy-name">{{ policy.name }}</p>
+                    <p class="policy-summary">{{ policy.summary }}</p>
+                    <p class="policy-details">주관: {{ policy.organization }} | 기간: {{ policy.period }}</p>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2 class="card-title">관련 정책 및 규제사항</h2>
-                {% if policies %}
-                    {% for policy in policies %}
-                    <div class="policy-item">
-                        <p class="policy-name">{{ policy.name }}</p>
-                        <p class="policy-summary">{{ policy.summary }}</p>
-                        <p style="font-size: 13px; color: #888; margin-top: 4px;">주관: {{ policy.organization }} | 기간: {{ policy.period }}</p>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p>해당 지역과 관련된 정부 지원 정책 정보를 찾지 못했습니다.</p>
-                {% endif %}
-            </div>
+                {% endfor %}
+            {% else %}
+                <p>해당 지역과 관련된 정부 지원 정책 정보를 찾지 못했습니다.</p>
+            {% endif %}
         </section>
     </main>
 </body>

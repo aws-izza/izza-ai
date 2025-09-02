@@ -316,34 +316,43 @@
                         "인프라": "변전소, 송전탑, 인구밀도 항목을 분석한 결과입니다.",
                         "안정성": "연간 재난문자, 정책 관련 지원 대상 항목을 분석한 결과입니다."
                     }.items() %}
-                        {% set score = analyze_data[field] %}
-                        {% if score < 50 %}
-                            {% set badge_text = "미흡" %}
-                            {% set badge_color = "badge-poor" %}
-                            {% set progress_color = "progress-poor" %}
-                        {% elif score < 75 %}
-                            {% set badge_text = "양호" %}
-                            {% set badge_color = "badge-good" %}
-                            {% set progress_color = "progress-good" %}
-                        {% else %}
-                            {% set badge_text = "우수" %}
-                            {% set badge_color = "badge-excellent" %}
-                            {% set progress_color = "progress-excellent" %}
-                        {% endif %}
-
-                        <div class="field-score-item">
-                            <div class="field-score-header">
-                                <span class="field-score-title">{{ field }}</span>
-                                <div class="score-badge">
-                                    <span class="score-value">{{ score | int }}</span>
-                                    <span class="badge {{ badge_color }}">{{ badge_text }}</span>
+                        {% if field in analyze_data and analyze_data[field] is not none %}
+                            {% set score = analyze_data[field] %}
+                            {% if score < 50 %}
+                                {% set badge_text = "미흡" %}
+                                {% set badge_color = "badge-poor" %}
+                                {% set progress_color = "progress-poor" %}
+                            {% elif score < 75 %}
+                                {% set badge_text = "양호" %}
+                                {% set badge_color = "badge-good" %}
+                                {% set progress_color = "progress-good" %}
+                            {% else %}
+                                {% set badge_text = "우수" %}
+                                {% set badge_color = "badge-excellent" %}
+                                {% set progress_color = "progress-excellent" %}
+                            {% endif %}
+    
+                            <div class="field-score-item">
+                                <div class="field-score-header">
+                                    <span class="field-score-title">{{ field }}</span>
+                                    <div class="score-badge">
+                                        <span class="score-value">{{ score | int }}</span>
+                                        <span class="badge {{ badge_color }}">{{ badge_text }}</span>
+                                    </div>
+                                </div>
+                                <div class="field-score-description">{{ desc }}</div>
+                                <div class="progress-bar">
+                                    <div class="progress {{ progress_color }}" style="width: {{ score }}%;"></div>
                                 </div>
                             </div>
-                            <div class="field-score-description">{{ desc }}</div>
-                            <div class="progress-bar">
-                                <div class="progress {{ progress_color }}" style="width: {{ score }}%;"></div>
+                        {% else %}
+                            <div class="field-score-item">
+                                <div class="field-score-header">
+                                    <span class="field-score-title">{{ field }}</span>
+                                </div>
+                                <div class="field-score-description">분석대상으로 설정되지 않았습니다.</div>
                             </div>
-                        </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
