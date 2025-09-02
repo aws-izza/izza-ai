@@ -23,17 +23,29 @@ def land_knowledge_analysis(land_data: str, analyze_data: Dict[str, Any]) -> str
     Returns:
         토지에 대한 전문적인 분석 결과
     """
+    
+    score_lines = []
+    if analyze_data.get('totalScore') is not None:
+        score_lines.append(f"- 종합 점수: {round(analyze_data['totalScore'], 2)}")
+    if analyze_data.get('입지조건') is not None:
+        score_lines.append(f"- 입지조건: {round(analyze_data['입지조건'], 2)}")
+    if analyze_data.get('인프라') is not None:
+        score_lines.append(f"- 인프라: {round(analyze_data['인프라'], 2)}")
+    if analyze_data.get('안정성') is not None:
+        score_lines.append(f"- 안정성: {round(analyze_data['안정성'], 2)}")
+
+    if score_lines:
+        scores_section = "분석 점수:\n" + "\n".join(score_lines)
+    else:
+        scores_section = "분석 점수: 제공된 점수 없음"
+
     query = f"""
     다음 토지 정보와 점수를 바탕으로 상세한 분석을 해주세요:
 
     토지 정보:
     {land_data}
 
-    분석 점수:
-    - 종합 점수: {round(analyze_data.get('totalScore') or 0, 2)}
-    - 입지조건: {round(analyze_data.get('입지조건') or 0, 2)}
-    - 인프라: {round(analyze_data.get('인프라') or 0, 2)}
-    - 안정성: {round(analyze_data.get('안정성') or 0, 2)}
+    {scores_section}
 
     다음 항목들을 포함하여 분석해주세요:
     1. 지목과 용도지역의 특성 및 의미
@@ -47,6 +59,7 @@ def land_knowledge_analysis(land_data: str, analyze_data: Dict[str, Any]) -> str
     """
     
     return knowledge_agent(query)
+
 
 @tool
 def policy_search_analysis(land_data: str) -> str:
