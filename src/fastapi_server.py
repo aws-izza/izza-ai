@@ -42,10 +42,10 @@ class LandData(BaseModel):
     공시지가: float = Field(..., description="공시지가")
 
 class AnalyzeData(BaseModel):
-    totalScore: int = Field(..., description="종합 점수")
-    입지조건: int = Field(..., description="입지조건 점수")
-    인프라: int = Field(..., description="인프라 점수")
-    안정성: int = Field(..., description="안정성 점수")
+    totalScore: Optional[int] = Field(None, description="종합 점수")
+    입지조건: Optional[int] = Field(None, description="입지조건 점수")
+    인프라: Optional[int] = Field(None, description="인프라 점수")
+    안정성: Optional[int] = Field(None, description="안정성 점수")
 
 class AnalysisRequest(BaseModel):
     analyze_data: AnalyzeData = Field(..., description="분석 점수 데이터")
