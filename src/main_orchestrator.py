@@ -30,10 +30,10 @@ def land_knowledge_analysis(land_data: str, analyze_data: Dict[str, Any]) -> str
     {land_data}
 
     분석 점수:
-    - 종합 점수: {round(analyze_data.get('totalScore', 0), 2)}
-    - 입지조건: {round(analyze_data.get('입지조건', 0), 2)}
-    - 인프라: {round(analyze_data.get('인프라', 0), 2)}
-    - 안정성: {round(analyze_data.get('안정성', 0), 2)}
+    - 종합 점수: {round(analyze_data.get('totalScore') or 0, 2)}
+    - 입지조건: {round(analyze_data.get('입지조건') or 0, 2)}
+    - 인프라: {round(analyze_data.get('인프라') or 0, 2)}
+    - 안정성: {round(analyze_data.get('안정성') or 0, 2)}
 
     다음 항목들을 포함하여 분석해주세요:
     1. 지목과 용도지역의 특성 및 의미
