@@ -4,7 +4,7 @@ from knowledge_agent_tool import knowledge_agent
 from policy_agent import policy_agent
 from dotenv import load_dotenv
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List
 from jinja2 import Environment, FileSystemLoader
 import re
@@ -428,7 +428,8 @@ def create_korean_land_report(land_data: Dict[str, Any], knowledge_analysis: str
     """
     토지 분석 결과를 종합하여 한국어 보고서를 생성합니다.
     """
-    current_date = datetime.now().strftime("%Y년 %m월 %d일")
+    kst_tz = timezone(timedelta(hours=9))
+    current_date = datetime.now(kst_tz).strftime("%Y년 %m월 %d일")
     
     # 공시지가 포맷팅 처리
     gongsi_price = land_data.get('공시지가', 0)
@@ -624,7 +625,8 @@ def create_template_data(land_data: Dict[str, Any], knowledge_analysis: str, pol
     """
     Jinja2 템플릿용 데이터 구조를 생성합니다.
     """
-    current_date = datetime.now()
+    kst_tz = timezone(timedelta(hours=9))
+    current_date = datetime.now(kst_tz)
     
     # 공시지가 포맷팅
     gongsi_price = land_data.get('공시지가', 0)
@@ -813,7 +815,8 @@ def run_land_analysis_inference(land_data_input, analyze_data_input=None) -> Dic
         
     except Exception as e:
         # 오류 발생 시 기본 템플릿 데이터 반환
-        current_date = datetime.now()
+        kst_tz = timezone(timedelta(hours=9))
+        current_date = datetime.now(kst_tz)
         default_analyze_data = {
             "totalScore": 0,
             "입지조건": 0,
