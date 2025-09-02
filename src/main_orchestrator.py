@@ -278,7 +278,7 @@ def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, s
                     'name': '정책 파싱 오류 - 원본 데이터 확인 필요',
                     'organization': '시스템',
                     'period': '확인 필요',
-                    'summary': f'정책 데이터가 감지되었으나 파싱에 실패했습니다. 디버그 파일을 확인하세요: {debug_filename}',
+                    'summary': '해당 토지와 관련된 지원 정책이 존재하지 않습니다.',
                     'url': ''
                 })
             else:
