@@ -316,6 +316,12 @@ async def health_check():
         "active_tasks": len(analysis_tasks)
     }
 
+@app.get("/api/test/error")
+async def test_error():
+    """테스트용 에러 발생 API"""
+    logger.error("This is a test error log message.")
+    raise HTTPException(status_code=500, detail="This is a test error.")
+
 @app.get("/actuator/health")
 async def actuator_health_check():
     """Actuator 헬스 체크"""
