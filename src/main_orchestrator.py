@@ -120,26 +120,16 @@ def policy_search_analysis(land_data: str) -> str:
 def parse_policy_response_for_template(policy_response: str) -> List[Dict[str, str]]:
     """
     정책 에이전트 응답을 파싱하여 템플릿용 구조화된 데이터로 변환합니다.
-    매우 강화된 파싱 로직으로 다양한 응답 형식을 처리합니다.
+    강화된 파싱 로직으로 다양한 응답 형식을 처리합니다.
     """
     policies = []
     
     try:
-        print(f"🔍 정책 응답 분석:")
-        print(f"   타입: {type(policy_response)}")
-        print(f"   길이: {len(str(policy_response))}")
-        
-        # 문자열로 변환 및 정리
         response_str = str(policy_response).strip()
-        
-        # 숨겨진 문자 제거
-        import re
+        # 컨트롤 문자 등 숨겨진 문자 제거
         response_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response_str)
         
-        print(f"   정리 후 길이: {len(response_str)}")
-        print(f"   미리보기: {response_str[:200]}...")
-        
-        # 디버그 파일 저장 (항상 저장하여 패턴 분석)
+        # 디버그 파일 저장
         debug_filename = f"policy_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         try:
             with open(debug_filename, 'w', encoding='utf-8') as f:
